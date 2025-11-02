@@ -10,9 +10,19 @@ import { memo } from 'react';
 /**
  * Header component for the virtualized table
  */
-const TableHeader = ({ columns }) => (
+const TableHeader = ({ columns, selectable, selectedAll, onSelectAll }) => (
   <div className="sticky top-0 z-10 border-b bg-muted/50 backdrop-blur">
     <div className="flex">
+      {selectable && (
+        <div className="w-12 px-4 py-3 flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={selectedAll}
+            onChange={onSelectAll}
+            className="h-4 w-4 cursor-pointer"
+          />
+        </div>
+      )}
       {columns.map((col, idx) => (
         <div
           key={idx}
@@ -30,8 +40,9 @@ const TableHeader = ({ columns }) => (
  * Memoized for performance
  */
 const Row = memo(({ data, index, style }) => {
-  const { items, columns, searchTerm } = data;
+  const { items, columns, searchTerm, selectable, selectedItems, onSelectItem } = data;
   const item = items[index];
+  const isSelected = selectable && selectedItems?.has(item.id);
 
   // Highlight search terms
   const highlightText = (text, search) => {
@@ -85,8 +96,18 @@ const Row = memo(({ data, index, style }) => {
       style={style}
       className={`flex border-b hover:bg-muted/50 transition-colors ${
         index % 2 === 0 ? 'bg-background' : 'bg-muted/20'
-      }`}
+      } ${isSelected ? 'bg-blue-50 dark:bg-blue-950' : ''}`}
     >
+      {selectable && (
+        <div className="w-12 px-4 py-3 flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelectItem(item.id)}
+            className="h-4 w-4 cursor-pointer"
+          />
+        </div>
+      )}
       {columns.map((col, idx) => {
         const value = item.data?.[col] ?? item[col] ?? '';
         const displayValue = Array.isArray(value) ? value.join(', ') : value;
@@ -116,13 +137,23 @@ Row.displayName = 'VirtualizedRow';
  * @param {string} props.searchTerm - Search term for highlighting
  * @param {number} props.height - Height of the table viewport
  * @param {number} props.rowHeight - Height of each row
+ * @param {boolean} props.selectable - Enable row selection
+ * @param {Set} props.selectedItems - Set of selected item IDs
+ * @param {Function} props.onSelectItem - Callback when item is selected
+ * @param {boolean} props.selectedAll - All items selected
+ * @param {Function} props.onSelectAll - Callback when select all is toggled
  */
 export default function VirtualizedTable({
   items = [],
   columns = [],
   searchTerm = '',
   height = 600,
-  rowHeight = 48
+  rowHeight = 48,
+  selectable = false,
+  selectedItems = new Set(),
+  onSelectItem = () => {},
+  selectedAll = false,
+  onSelectAll = () => {}
 }) {
   if (!items.length) {
     return (
@@ -142,13 +173,18 @@ export default function VirtualizedTable({
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      <TableHeader columns={columns} />
+      <TableHeader
+        columns={columns}
+        selectable={selectable}
+        selectedAll={selectedAll}
+        onSelectAll={onSelectAll}
+      />
       <List
         height={height}
         itemCount={items.length}
         itemSize={rowHeight}
         width="100%"
-        itemData={{ items, columns, searchTerm }}
+        itemData={{ items, columns, searchTerm, selectable, selectedItems, onSelectItem }}
       >
         {Row}
       </List>
@@ -156,6 +192,11 @@ export default function VirtualizedTable({
       {/* Footer with row count */}
       <div className="border-t bg-muted/30 px-4 py-2 text-sm text-muted-foreground">
         Showing {items.length.toLocaleString()} row{items.length !== 1 ? 's' : ''}
+        {selectable && selectedItems.size > 0 && (
+          <span className="ml-2 text-primary font-medium">
+            ({selectedItems.size} selected)
+          </span>
+        )}
       </div>
     </div>
   );

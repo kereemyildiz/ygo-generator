@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from './ui/Alert'
 import { Badge } from './ui/Badge'
 
 const FileUpload = () => {
-  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, deleteFile, loading, error } = useApp()
+  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, deleteFile, clearAllGroups, loading, error } = useApp()
   const [selectedFiles, setSelectedFiles] = useState([])
   const [deleting, setDeleting] = useState(null)
 
@@ -78,12 +78,14 @@ const FileUpload = () => {
 
   // Handle clear all files
   const handleClearAll = async () => {
-    if (!window.confirm(`Delete all ${uploadedFiles.length} file(s) and reset analysis?`)) return
+    if (!window.confirm(`Delete all ${uploadedFiles.length} file(s) and reset analysis? This will also clear all groups.`)) return
 
     try {
       setDeleting('all')
       // Delete all files
       await Promise.all(uploadedFiles.map(file => deleteFile(file)))
+      // Clear all groups and analysis
+      await clearAllGroups()
       // Will automatically refresh the list
     } catch (err) {
       console.error('Clear all failed:', err)

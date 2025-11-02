@@ -7,6 +7,7 @@ import { FileSpreadsheet, Sun, Moon } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useTheme } from '../context/ThemeContext'
 import { Button } from './ui/Button'
+import { tr } from '../lib/tr'
 
 const Header = () => {
   const { statistics } = useApp()
@@ -22,8 +23,8 @@ const Header = () => {
               <FileSpreadsheet className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">SRS Link Manager</h1>
-              <p className="text-xs text-muted-foreground">Requirements Traceability Tool</p>
+              <h1 className="text-xl font-bold text-foreground">{tr.appName}</h1>
+              <p className="text-xs text-muted-foreground">{tr.appTagline}</p>
             </div>
           </div>
 
@@ -34,12 +35,12 @@ const Header = () => {
               <div className="hidden md:flex items-center gap-6 px-4 py-2 rounded-lg bg-muted/50">
                 <div className="text-center">
                   <div className="text-lg font-bold text-foreground">{statistics.total_groups}</div>
-                  <div className="text-xs text-muted-foreground">Groups</div>
+                  <div className="text-xs text-muted-foreground">Grup</div>
                 </div>
                 <div className="h-8 w-px bg-border" />
                 <div className="text-center">
                   <div className="text-lg font-bold text-foreground">{statistics.total_items}</div>
-                  <div className="text-xs text-muted-foreground">Items</div>
+                  <div className="text-xs text-muted-foreground">Öğe</div>
                 </div>
                 {statistics.total_groups > 0 && (
                   <>
@@ -48,7 +49,7 @@ const Header = () => {
                       <div className="text-lg font-bold text-foreground">
                         {statistics.average_items_per_group.toFixed(1)}
                       </div>
-                      <div className="text-xs text-muted-foreground">Avg/Group</div>
+                      <div className="text-xs text-muted-foreground">Ort/Grup</div>
                     </div>
                   </>
                 )}
@@ -61,7 +62,7 @@ const Header = () => {
               size="icon"
               onClick={toggleTheme}
               className="rounded-lg hover:bg-muted"
-              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={isDark ? tr.header.lightMode : tr.header.darkMode}
             >
               {isDark ? (
                 <Sun className="h-5 w-5 text-orange-500" />

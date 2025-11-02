@@ -294,6 +294,23 @@ export const AppProvider = ({ children }) => {
     }
   }, [handleError, showMessage])
 
+  const clearAllGroups = useCallback(async () => {
+    try {
+      setLoading(true)
+      await api.clearAllGroups()
+      setGroups([])
+      setOrphanedItems([])
+      setStatistics(null)
+      showMessage('All groups cleared successfully')
+      setError(null)
+    } catch (err) {
+      handleError(err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [handleError, showMessage])
+
   // Context value
   const value = {
     // State
@@ -320,6 +337,7 @@ export const AppProvider = ({ children }) => {
     fetchOrphanedItems,
     addOrphanedToGroup,
     createGroupFromOrphaned,
+    clearAllGroups,
     clearError,
     showMessage,
   }

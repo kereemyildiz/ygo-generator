@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Trash2, Download, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
@@ -13,9 +13,11 @@ import { useApp } from '../context/AppContext'
 import { exportGroupAsJSON, exportGroupAsExcel } from '../lib/api'
 
 const GroupCard = ({ group }) => {
-  const { deleteGroup, removeItemFromGroup } = useApp()
+  const { deleteGroup, removeItemFromGroup, updateGroup } = useApp()
   const [expanded, setExpanded] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(group.group_name)
 
   // Handle group deletion
   const handleDelete = async () => {
@@ -42,6 +44,38 @@ const GroupCard = ({ group }) => {
     }
   }
 
+  // Handle name edit save
+  const handleSaveName = async () => {
+    if (editedName.trim() === '' || editedName === group.group_name) {
+      setIsEditingName(false)
+      setEditedName(group.group_name)
+      return
+    }
+
+    try {
+      await updateGroup(group.group_id, { name: editedName })
+      setIsEditingName(false)
+    } catch (err) {
+      console.error('Failed to update group name:', err)
+      setEditedName(group.group_name)
+    }
+  }
+
+  // Handle name edit cancel
+  const handleCancelEdit = () => {
+    setEditedName(group.group_name)
+    setIsEditingName(false)
+  }
+
+  // Handle key press in name edit
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSaveName()
+    } else if (e.key === 'Escape') {
+      handleCancelEdit()
+    }
+  }
+
   // Group items by source file
   const itemsByFile = group.items.reduce((acc, item) => {
     const file = item.source_file
@@ -57,7 +91,39 @@ const GroupCard = ({ group }) => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <CardTitle className="text-xl">{group.group_name}</CardTitle>
+            {/* Editable Group Name */}
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  onBlur={handleSaveName}
+                  autoFocus
+                  className="text-xl font-semibold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                />
+                <Button size="sm" variant="ghost" onClick={handleSaveName} title="Save">
+                  <Check className="h-4 w-4 text-green-600" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleCancelEdit} title="Cancel">
+                  <XCircle className="h-4 w-4 text-red-600" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <CardTitle className="text-xl">{group.group_name}</CardTitle>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditingName(true)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Edit name"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <div className="flex items-center space-x-2 mt-2">
               <Badge variant="secondary">
                 {group.item_count} item{group.item_count !== 1 ? 's' : ''}

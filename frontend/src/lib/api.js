@@ -280,4 +280,13 @@ export const createGroupFromOrphaned = async (itemIds, groupName) => {
   return response.data
 }
 
+/**
+ * Clear all groups and orphaned items
+ * @returns {Promise} Delete response
+ */
+export const clearAllGroups = async () => {
+  const response = await api.delete('/groups/all')
+  return response.data
+}
+
 export default api

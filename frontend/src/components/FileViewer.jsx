@@ -5,9 +5,10 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { X, Search, Filter, FileX, Database, Loader2 } from 'lucide-react';
+import { X, Search, Filter, FileX, Database, Loader2, FolderPlus, UserPlus } from 'lucide-react';
 import VirtualizedTable from './VirtualizedTable';
 import * as api from '../lib/api';
+import { useApp } from '../context/AppContext';
 
 /**
  * FileViewer Modal Component
@@ -17,11 +18,15 @@ import * as api from '../lib/api';
  * @param {Function} props.onClose - Callback when modal is closed
  */
 export default function FileViewer({ filename, onClose }) {
+  const { groups, addItemToGroup, createGroupFromOrphaned, fetchGroups } = useApp();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOrphaned, setFilterOrphaned] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [showGroupMenu, setShowGroupMenu] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
 
   // Fetch file data
   useEffect(() => {
@@ -74,13 +79,17 @@ export default function FileViewer({ filename, onClose }) {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (showGroupMenu) {
+          setShowGroupMenu(false);
+        } else {
+          onClose();
+        }
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  }, [onClose, showGroupMenu]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -89,6 +98,60 @@ export default function FileViewer({ filename, onClose }) {
       document.body.style.overflow = 'unset';
     };
   }, []);
+
+  // Selection handlers
+  const handleSelectItem = (itemId) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === filteredItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredItems.map(item => item.id)));
+    }
+  };
+
+  // Add to existing group
+  const handleAddToGroup = async (groupId) => {
+    if (selectedItems.size === 0) return;
+
+    try {
+      const itemsToAdd = filteredItems.filter(item => selectedItems.has(item.id));
+      for (const item of itemsToAdd) {
+        await addItemToGroup(groupId, item);
+      }
+      setSelectedItems(new Set());
+      setShowGroupMenu(false);
+      await fetchGroups();
+    } catch (err) {
+      console.error('Failed to add items to group:', err);
+    }
+  };
+
+  // Create new group from selection
+  const handleCreateNewGroup = async () => {
+    if (selectedItems.size === 0 || !newGroupName.trim()) return;
+
+    try {
+      const itemIds = Array.from(selectedItems);
+      await createGroupFromOrphaned(itemIds, newGroupName);
+      setSelectedItems(new Set());
+      setShowGroupMenu(false);
+      setNewGroupName('');
+      await fetchGroups();
+    } catch (err) {
+      console.error('Failed to create group:', err);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -150,6 +213,76 @@ export default function FileViewer({ filename, onClose }) {
             <div className="text-sm text-muted-foreground whitespace-nowrap">
               {filteredItems.length.toLocaleString()} of {data?.total.toLocaleString()} items
             </div>
+
+            {/* Group Actions */}
+            {selectedItems.size > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowGroupMenu(!showGroupMenu)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span className="whitespace-nowrap">
+                    Add to Group ({selectedItems.size})
+                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showGroupMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-background border rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
+                    {/* Create New Group */}
+                    <div className="p-3 border-b">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FolderPlus className="h-4 w-4" />
+                        <span className="font-medium text-sm">Create New Group</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Group name..."
+                          value={newGroupName}
+                          onChange={(e) => setNewGroupName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleCreateNewGroup()}
+                          className="flex-1 px-3 py-1.5 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <button
+                          onClick={handleCreateNewGroup}
+                          disabled={!newGroupName.trim()}
+                          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Create
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Existing Groups */}
+                    <div className="p-2">
+                      <div className="text-xs text-muted-foreground px-2 py-1 font-medium">
+                        Add to Existing Group
+                      </div>
+                      {groups.length === 0 ? (
+                        <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                          No groups available
+                        </div>
+                      ) : (
+                        groups.map(group => (
+                          <button
+                            key={group.group_id}
+                            onClick={() => handleAddToGroup(group.group_id)}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded transition-colors"
+                          >
+                            {group.group_name}
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({group.item_count} items)
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -195,6 +328,11 @@ export default function FileViewer({ filename, onClose }) {
                   searchTerm={searchTerm}
                   height={window.innerHeight - 280}
                   rowHeight={48}
+                  selectable={true}
+                  selectedItems={selectedItems}
+                  onSelectItem={handleSelectItem}
+                  selectedAll={selectedItems.size === filteredItems.length}
+                  onSelectAll={handleSelectAll}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
