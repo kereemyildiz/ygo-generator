@@ -30,14 +30,14 @@ export const AppProvider = ({ children }) => {
   const [statistics, setStatistics] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // Helper to handle errors
+  // Helper to handle errors (not in any dependency arrays)
   const handleError = useCallback((err) => {
     const errorMessage = err.response?.data?.detail || err.message || 'Bir hata oluştu'
     toast.error(errorMessage)
     console.error('Error:', err)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Helper to show success message
+  // Helper to show success message (not in any dependency arrays)
   const showMessage = useCallback((msg) => {
     toast.success(msg)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -49,13 +49,12 @@ export const AppProvider = ({ children }) => {
       setLoading(true)
       const data = await api.getUploadedFiles()
       setUploadedFiles(data.files)
-      setError(null)
     } catch (err) {
       handleError(err)
     } finally {
       setLoading(false)
     }
-  }, [handleError])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const uploadFiles = useCallback(async (files) => {
     try {
@@ -63,7 +62,6 @@ export const AppProvider = ({ children }) => {
       const data = await api.uploadFiles(files)
       showMessage(data.message)
       await fetchUploadedFiles()
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -71,7 +69,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchUploadedFiles])
+  }, [fetchUploadedFiles]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteFile = useCallback(async (filename) => {
     try {
@@ -79,14 +77,13 @@ export const AppProvider = ({ children }) => {
       const data = await api.deleteFile(filename)
       showMessage(data.message)
       await fetchUploadedFiles()
-      setError(null)
     } catch (err) {
       handleError(err)
       throw err
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchUploadedFiles])
+  }, [fetchUploadedFiles]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const analyzeFiles = useCallback(async (filePaths = null) => {
     try {
@@ -101,7 +98,6 @@ export const AppProvider = ({ children }) => {
         api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items))
       ])
 
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -109,7 +105,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ===== Group Operations =====
 
@@ -118,19 +114,17 @@ export const AppProvider = ({ children }) => {
       setLoading(true)
       const data = await api.getAllGroups()
       setGroups(data.groups)
-      setError(null)
     } catch (err) {
       handleError(err)
     } finally {
       setLoading(false)
     }
-  }, [handleError])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getGroup = useCallback(async (groupId) => {
     try {
       setLoading(true)
       const data = await api.getGroup(groupId)
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -138,7 +132,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateGroup = useCallback(async (groupId, updates) => {
     try {
@@ -146,7 +140,6 @@ export const AppProvider = ({ children }) => {
       const data = await api.updateGroup(groupId, updates)
       showMessage('Group updated successfully')
       await fetchGroups()
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -154,7 +147,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups])
+  }, [fetchGroups]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteGroup = useCallback(async (groupId) => {
     try {
@@ -162,14 +155,13 @@ export const AppProvider = ({ children }) => {
       const data = await api.deleteGroup(groupId)
       showMessage(data.message)
       await fetchGroups()
-      setError(null)
     } catch (err) {
       handleError(err)
       throw err
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups])
+  }, [fetchGroups]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addItemToGroup = useCallback(async (groupId, item) => {
     try {
@@ -177,7 +169,6 @@ export const AppProvider = ({ children }) => {
       const data = await api.addItemToGroup(groupId, item)
       showMessage('Item added to group')
       await fetchGroups()
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -185,7 +176,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups])
+  }, [fetchGroups]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const removeItemFromGroup = useCallback(async (groupId, itemId) => {
     try {
@@ -193,7 +184,6 @@ export const AppProvider = ({ children }) => {
       const data = await api.removeItemFromGroup(groupId, itemId)
       showMessage('Item removed from group')
       await fetchGroups()
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -201,7 +191,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups])
+  }, [fetchGroups]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const mergeGroups = useCallback(async (groupId1, groupId2, newName) => {
     try {
@@ -209,7 +199,6 @@ export const AppProvider = ({ children }) => {
       const data = await api.mergeGroups(groupId1, groupId2, newName)
       showMessage(data.message)
       await fetchGroups()
-      setError(null)
       return data
     } catch (err) {
       handleError(err)
@@ -217,7 +206,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups])
+  }, [fetchGroups]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ===== Statistics =====
 
@@ -225,11 +214,10 @@ export const AppProvider = ({ children }) => {
     try {
       const data = await api.getStatistics()
       setStatistics(data)
-      setError(null)
     } catch (err) {
       handleError(err)
     }
-  }, [handleError])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ===== Orphaned Items Operations =====
 
@@ -238,13 +226,12 @@ export const AppProvider = ({ children }) => {
       setLoading(true)
       const data = await api.getOrphanedItems()
       setOrphanedItems(data.orphaned_items)
-      setError(null)
     } catch (err) {
       handleError(err)
     } finally {
       setLoading(false)
     }
-  }, [handleError])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addOrphanedToGroup = useCallback(async (groupId, itemIds) => {
     try {
@@ -257,15 +244,13 @@ export const AppProvider = ({ children }) => {
         api.getAllGroups().then(result => setGroups(result.groups)),
         api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items))
       ])
-
-      setError(null)
     } catch (err) {
       handleError(err)
       throw err
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const createGroupFromOrphaned = useCallback(async (itemIds, groupName) => {
     try {
@@ -279,15 +264,13 @@ export const AppProvider = ({ children }) => {
         api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items)),
         api.getStatistics().then(result => setStatistics(result))
       ])
-
-      setError(null)
     } catch (err) {
       handleError(err)
       throw err
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clearAllGroups = useCallback(async () => {
     try {
@@ -298,14 +281,13 @@ export const AppProvider = ({ children }) => {
       setOrphanedItems([])
       setStatistics(null)
       showMessage('Tüm gruplar ve analiz sonuçları temizlendi')
-      setError(null)
     } catch (err) {
       handleError(err)
       throw err
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Context value
   const value = {
