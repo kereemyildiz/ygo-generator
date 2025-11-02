@@ -99,10 +99,10 @@ export const AppProvider = ({ children }) => {
       const data = await api.analyzeFiles(filePaths)
       showMessage(data.message)
 
-      // Refresh groups, statistics, and orphaned items
+      // Refresh groups, statistics, and orphaned items directly
       await Promise.all([
-        fetchGroups(),
-        fetchStatistics(),
+        api.getAllGroups().then(result => setGroups(result.groups)),
+        api.getStatistics().then(result => setStatistics(result)),
         api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items))
       ])
 
@@ -114,7 +114,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups, fetchStatistics])
+  }, [handleError, showMessage])
 
   // ===== Group Operations =====
 
@@ -256,8 +256,13 @@ export const AppProvider = ({ children }) => {
       setLoading(true)
       await api.addOrphanedToGroup(groupId, itemIds)
       showMessage('Items added to group successfully')
-      await fetchGroups()
-      await fetchOrphanedItems()
+
+      // Refresh groups and orphaned items directly
+      await Promise.all([
+        api.getAllGroups().then(result => setGroups(result.groups)),
+        api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items))
+      ])
+
       setError(null)
     } catch (err) {
       handleError(err)
@@ -265,16 +270,21 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups])
+  }, [handleError, showMessage])
 
   const createGroupFromOrphaned = useCallback(async (itemIds, groupName) => {
     try {
       setLoading(true)
       await api.createGroupFromOrphaned(itemIds, groupName)
       showMessage(`Group "${groupName}" created successfully`)
-      await fetchGroups()
-      await fetchOrphanedItems()
-      await fetchStatistics()
+
+      // Refresh groups, orphaned items, and statistics directly
+      await Promise.all([
+        api.getAllGroups().then(result => setGroups(result.groups)),
+        api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items)),
+        api.getStatistics().then(result => setStatistics(result))
+      ])
+
       setError(null)
     } catch (err) {
       handleError(err)
@@ -282,7 +292,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage, fetchGroups, fetchStatistics])
+  }, [handleError, showMessage])
 
   // Context value
   const value = {
