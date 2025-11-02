@@ -14,7 +14,8 @@ from datetime import datetime
 from models.schemas import (
     GroupResponse, GroupListResponse, GroupUpdate,
     AddItemRequest, RemoveItemRequest, MergeGroupsRequest, MergeGroupsResponse,
-    StatisticsResponse
+    StatisticsResponse, OrphanedItemsResponse, AddOrphanedToGroupRequest,
+    CreateGroupFromOrphanedRequest
 )
 from services.group_manager import group_manager
 
@@ -332,3 +333,91 @@ async def export_group_excel(group_id: str):
             status_code=500,
             detail=f"Failed to export group: {str(e)}"
         )
+
+# ===== Orphaned Items Endpoints =====
+
+@router.get("/orphaned", response_model=OrphanedItemsResponse)
+async def get_orphaned_items():
+    """
+    Get all orphaned items (items not in any group).
+
+    Returns:
+        OrphanedItemsResponse with list of orphaned items
+    """
+    try:
+        orphaned = group_manager.get_orphaned_items()
+
+        return OrphanedItemsResponse(
+            orphaned_items=orphaned,
+            total_orphaned=len(orphaned)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve orphaned items: {str(e)}"
+        )
+
+
+@router.post("/orphaned/add-to-group", response_model=GroupResponse)
+async def add_orphaned_to_group(request: AddOrphanedToGroupRequest):
+    """
+    Add orphaned item(s) to an existing group.
+
+    Args:
+        request: Request with item IDs and target group ID
+
+    Returns:
+        Updated group
+    """
+    # Get the target group
+    group = group_manager.get_group(request.group_id)
+    if not group:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Group not found: {request.group_id}"
+        )
+
+    # Get orphaned items
+    orphaned = group_manager.get_orphaned_items()
+    items_to_add = [item for item in orphaned if item['id'] in request.item_ids]
+
+    if not items_to_add:
+        raise HTTPException(
+            status_code=404,
+            detail="No matching orphaned items found"
+        )
+
+    # Add items to group
+    for item in items_to_add:
+        group_manager.add_item_to_group(request.group_id, item)
+        group_manager.remove_orphaned_item(item['id'])
+
+    # Get updated group
+    updated_group = group_manager.get_group(request.group_id)
+
+    return GroupResponse(**updated_group)
+
+
+@router.post("/orphaned/create-group", response_model=GroupResponse)
+async def create_group_from_orphaned(request: CreateGroupFromOrphanedRequest):
+    """
+    Create a new group from selected orphaned items.
+
+    Args:
+        request: Request with item IDs and group name
+
+    Returns:
+        Created group
+    """
+    new_group = group_manager.create_group_from_orphaned_items(
+        request.item_ids,
+        request.group_name
+    )
+
+    if not new_group:
+        raise HTTPException(
+            status_code=404,
+            detail="No matching orphaned items found"
+        )
+
+    return GroupResponse(**new_group)

@@ -1,13 +1,16 @@
 /**
  * Header Component
- * Application header with title and statistics
+ * Application header with title, theme toggle, and statistics
  */
 
-import { FileSpreadsheet } from 'lucide-react'
+import { FileSpreadsheet, Sun, Moon } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useTheme } from '../context/ThemeContext'
+import { Button } from './ui/Button'
 
 const Header = () => {
   const { statistics } = useApp()
+  const { isDark, toggleTheme } = useTheme()
 
   return (
     <header className="bg-primary text-primary-foreground shadow-lg">
@@ -22,27 +25,45 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Statistics */}
-          {statistics && (
-            <div className="hidden md:flex items-center space-x-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{statistics.total_groups}</div>
-                <div className="text-xs opacity-90">Groups</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{statistics.total_items}</div>
-                <div className="text-xs opacity-90">Items</div>
-              </div>
-              {statistics.total_groups > 0 && (
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {statistics.average_items_per_group.toFixed(1)}
-                  </div>
-                  <div className="text-xs opacity-90">Avg per Group</div>
-                </div>
+          {/* Right Side: Theme Toggle + Statistics */}
+          <div className="flex items-center space-x-6">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDark ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
               )}
-            </div>
-          )}
+            </Button>
+
+            {/* Statistics */}
+            {statistics && (
+              <div className="hidden md:flex items-center space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{statistics.total_groups}</div>
+                  <div className="text-xs opacity-90">Groups</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{statistics.total_items}</div>
+                  <div className="text-xs opacity-90">Items</div>
+                </div>
+                {statistics.total_groups > 0 && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">
+                      {statistics.average_items_per_group.toFixed(1)}
+                    </div>
+                    <div className="text-xs opacity-90">Avg per Group</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

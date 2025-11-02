@@ -195,4 +195,43 @@ export const exportGroupAsExcel = (groupId) => {
   return `/api/groups/${groupId}/export/excel`
 }
 
+// ===== Orphaned Items API =====
+
+/**
+ * Get all orphaned items
+ * @returns {Promise} Orphaned items data
+ */
+export const getOrphanedItems = async () => {
+  const response = await api.get('/groups/orphaned')
+  return response.data
+}
+
+/**
+ * Add orphaned items to an existing group
+ * @param {string} groupId - Target group ID
+ * @param {Array<string>} itemIds - IDs of orphaned items to add
+ * @returns {Promise} Updated group
+ */
+export const addOrphanedToGroup = async (groupId, itemIds) => {
+  const response = await api.post('/groups/orphaned/add-to-group', {
+    group_id: groupId,
+    item_ids: itemIds,
+  })
+  return response.data
+}
+
+/**
+ * Create a new group from orphaned items
+ * @param {Array<string>} itemIds - IDs of orphaned items
+ * @param {string} groupName - Name for the new group
+ * @returns {Promise} Created group
+ */
+export const createGroupFromOrphaned = async (itemIds, groupName) => {
+  const response = await api.post('/groups/orphaned/create-group', {
+    item_ids: itemIds,
+    group_name: groupName,
+  })
+  return response.data
+}
+
 export default api

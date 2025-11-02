@@ -23,6 +23,7 @@ export const AppProvider = ({ children }) => {
   // State
   const [uploadedFiles, setUploadedFiles] = useState([])
   const [groups, setGroups] = useState([])
+  const [orphanedItems, setOrphanedItems] = useState([])
   const [statistics, setStatistics] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -97,8 +98,14 @@ export const AppProvider = ({ children }) => {
       setLoading(true)
       const data = await api.analyzeFiles(filePaths)
       showMessage(data.message)
-      await fetchGroups() // Refresh groups
-      await fetchStatistics() // Refresh statistics
+
+      // Refresh groups, statistics, and orphaned items
+      await Promise.all([
+        fetchGroups(),
+        fetchStatistics(),
+        api.getOrphanedItems().then(result => setOrphanedItems(result.orphaned_items))
+      ])
+
       setError(null)
       return data
     } catch (err) {
@@ -107,7 +114,7 @@ export const AppProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }, [handleError, showMessage])
+  }, [handleError, showMessage, fetchGroups, fetchStatistics])
 
   // ===== Group Operations =====
 
@@ -229,11 +236,60 @@ export const AppProvider = ({ children }) => {
     }
   }, [handleError])
 
+  // ===== Orphaned Items Operations =====
+
+  const fetchOrphanedItems = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await api.getOrphanedItems()
+      setOrphanedItems(data.orphaned_items)
+      setError(null)
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [handleError])
+
+  const addOrphanedToGroup = useCallback(async (groupId, itemIds) => {
+    try {
+      setLoading(true)
+      await api.addOrphanedToGroup(groupId, itemIds)
+      showMessage('Items added to group successfully')
+      await fetchGroups()
+      await fetchOrphanedItems()
+      setError(null)
+    } catch (err) {
+      handleError(err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [handleError, showMessage, fetchGroups])
+
+  const createGroupFromOrphaned = useCallback(async (itemIds, groupName) => {
+    try {
+      setLoading(true)
+      await api.createGroupFromOrphaned(itemIds, groupName)
+      showMessage(`Group "${groupName}" created successfully`)
+      await fetchGroups()
+      await fetchOrphanedItems()
+      await fetchStatistics()
+      setError(null)
+    } catch (err) {
+      handleError(err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [handleError, showMessage, fetchGroups, fetchStatistics])
+
   // Context value
   const value = {
     // State
     uploadedFiles,
     groups,
+    orphanedItems,
     statistics,
     loading,
     error,
@@ -251,6 +307,9 @@ export const AppProvider = ({ children }) => {
     removeItemFromGroup,
     mergeGroups,
     fetchStatistics,
+    fetchOrphanedItems,
+    addOrphanedToGroup,
+    createGroupFromOrphaned,
     clearError,
     showMessage,
   }

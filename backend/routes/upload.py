@@ -135,6 +135,9 @@ async def analyze_files(request: AnalysisRequest = None):
         group_manager.clear_all_groups()
         group_manager.load_groups(analysis['groups'])
 
+        # Store orphaned items
+        group_manager.set_orphaned_items(analysis['orphaned_items'])
+
         # Get statistics
         stats = get_group_statistics(analysis['groups'])
 

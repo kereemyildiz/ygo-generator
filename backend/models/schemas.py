@@ -134,3 +134,23 @@ class StatisticsResponse(BaseModel):
     largest_group_size: int
     smallest_group_size: int
     source_files: List[str]
+
+
+# ===== Orphaned Items Schemas =====
+
+class OrphanedItemsResponse(BaseModel):
+    """Response for orphaned items."""
+    orphaned_items: List[ItemData]
+    total_orphaned: int
+
+
+class AddOrphanedToGroupRequest(BaseModel):
+    """Request to add orphaned item(s) to a group."""
+    item_ids: List[str] = Field(..., description="IDs of orphaned items to add")
+    group_id: str = Field(..., description="Target group ID")
+
+
+class CreateGroupFromOrphanedRequest(BaseModel):
+    """Request to create a new group from orphaned items."""
+    item_ids: List[str] = Field(..., description="IDs of orphaned items to include")
+    group_name: str = Field(..., description="Name for the new group")

@@ -16,6 +16,7 @@ class GroupManager:
     def __init__(self):
         """Initialize the group manager with empty storage."""
         self.groups = {}  # Dict of group_id -> group data
+        self.orphaned_items = []  # List of items not in any group
         self.next_id = 1
 
     def create_group(self, group_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -220,9 +221,72 @@ class GroupManager:
             self.create_group(group)
 
     def clear_all_groups(self):
-        """Clear all groups from storage."""
+        """Clear all groups and orphaned items from storage."""
         self.groups = {}
+        self.orphaned_items = []
         self.next_id = 1
+
+    def set_orphaned_items(self, items: List[Dict[str, Any]]):
+        """
+        Set the list of orphaned items.
+
+        Args:
+            items: List of orphaned item dictionaries
+        """
+        self.orphaned_items = items
+
+    def get_orphaned_items(self) -> List[Dict[str, Any]]:
+        """
+        Get all orphaned items.
+
+        Returns:
+            List of orphaned items
+        """
+        return self.orphaned_items
+
+    def remove_orphaned_item(self, item_id: str) -> bool:
+        """
+        Remove an item from orphaned items list.
+
+        Args:
+            item_id: ID of item to remove
+
+        Returns:
+            True if removed, False if not found
+        """
+        original_length = len(self.orphaned_items)
+        self.orphaned_items = [item for item in self.orphaned_items if item['id'] != item_id]
+        return len(self.orphaned_items) < original_length
+
+    def create_group_from_orphaned_items(self, item_ids: List[str], group_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Create a new group from selected orphaned items.
+
+        Args:
+            item_ids: List of item IDs to include in the new group
+            group_name: Name for the new group
+
+        Returns:
+            Created group or None if no valid items found
+        """
+        # Find items by IDs
+        items_to_add = [item for item in self.orphaned_items if item['id'] in item_ids]
+
+        if not items_to_add:
+            return None
+
+        # Create new group
+        group_data = {
+            'group_name': group_name,
+            'items': items_to_add
+        }
+        new_group = self.create_group(group_data)
+
+        # Remove items from orphaned list
+        for item_id in item_ids:
+            self.remove_orphaned_item(item_id)
+
+        return new_group
 
     def get_statistics(self) -> Dict[str, Any]:
         """

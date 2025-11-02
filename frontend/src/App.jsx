@@ -4,18 +4,20 @@
  */
 
 import { AppProvider, useApp } from './context/AppContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Header from './components/Header'
 import FileUpload from './components/FileUpload'
 import GroupList from './components/GroupList'
+import OrphanedItems from './components/OrphanedItems'
 import { Alert, AlertDescription } from './components/ui/Alert'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
-// Main content component (wrapped by AppProvider)
+// Main content component (wrapped by providers)
 const AppContent = () => {
   const { error, message, clearError } = useApp()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
@@ -47,6 +49,9 @@ const AppContent = () => {
 
         {/* Groups List Section */}
         <GroupList />
+
+        {/* Orphaned Items Section */}
+        <OrphanedItems />
       </main>
 
       {/* Footer */}
@@ -60,12 +65,14 @@ const AppContent = () => {
   )
 }
 
-// App component with provider
+// App component with providers
 const App = () => {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ThemeProvider>
   )
 }
 
