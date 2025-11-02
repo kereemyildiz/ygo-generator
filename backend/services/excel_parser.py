@@ -150,6 +150,7 @@ class ExcelParser:
             item = {
                 'id': str(item_id),
                 'source_file': self.filepath.name,
+                'source_type': 'excel',
                 'data': item_data,
                 'in_links': in_links,
                 'out_links': out_links

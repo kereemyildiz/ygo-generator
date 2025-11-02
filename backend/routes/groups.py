@@ -17,7 +17,7 @@ from models.schemas import (
     GroupResponse, GroupListResponse, GroupUpdate,
     AddItemRequest, RemoveItemRequest, MergeGroupsRequest, MergeGroupsResponse,
     StatisticsResponse, OrphanedItemsResponse, AddOrphanedToGroupRequest,
-    CreateGroupFromOrphanedRequest
+    CreateGroupFromOrphanedRequest, CreateManualItemRequest
 )
 from services.group_manager import group_manager
 
@@ -272,6 +272,58 @@ async def add_item_to_group(group_id: str, request: AddItemRequest):
     return GroupResponse(**group)
 
 
+@router.post("/manual-item", response_model=GroupResponse)
+async def create_manual_item(request: CreateManualItemRequest):
+    """
+    Create a manual item and add it to a group.
+
+    Manual items are user-created items (not from Excel files).
+    They have auto-generated IDs and contain title/description fields.
+
+    Args:
+        request: Request with group_id, title, and optional description
+
+    Returns:
+        Updated group with the new manual item
+    """
+    # Check if group exists
+    group = group_manager.get_group(request.group_id)
+    if not group:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Group not found: {request.group_id}"
+        )
+
+    # Generate unique ID for manual item
+    import uuid
+    manual_id = f"MANUAL-{uuid.uuid4().hex[:8].upper()}"
+
+    # Create manual item structure
+    manual_item = {
+        'id': manual_id,
+        'source_file': 'manual',
+        'source_type': 'manual',
+        'data': {
+            'Title': request.title,
+            'Description': request.description or '',
+            'Created': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        },
+        'in_links': [],
+        'out_links': []
+    }
+
+    # Add to group
+    updated_group = group_manager.add_item_to_group(request.group_id, manual_item)
+
+    if not updated_group:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to add manual item to group"
+        )
+
+    return GroupResponse(**updated_group)
+
+
 @router.delete("/{group_id}/items/{item_id}", response_model=GroupResponse)
 async def remove_item_from_group(group_id: str, item_id: str):
     """
@@ -436,6 +488,7 @@ async def export_group_excel(group_id: str):
         row = {
             'Item_ID': item['id'],
             'Source_File': item['source_file'],
+            'Source_Type': item.get('source_type', 'excel'),
             'In_Links': ', '.join(item.get('in_links', [])),
             'Out_Links': ', '.join(item.get('out_links', []))
         }

@@ -289,4 +289,20 @@ export const clearAllGroups = async () => {
   return response.data
 }
 
+/**
+ * Create a manual item in a group
+ * @param {string} groupId - The group ID
+ * @param {string} title - Title of the manual item
+ * @param {string} description - Optional description
+ * @returns {Promise} Updated group
+ */
+export const createManualItem = async (groupId, title, description = '') => {
+  const response = await api.post('/groups/manual-item', {
+    group_id: groupId,
+    title,
+    description,
+  })
+  return response.data
+}
+
 export default api

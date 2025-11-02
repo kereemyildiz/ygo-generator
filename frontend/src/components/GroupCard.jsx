@@ -4,20 +4,27 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, UserPlus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
+import Modal from './ui/Modal'
 import { getFileColor } from '../lib/utils'
 import { useApp } from '../context/AppContext'
-import { exportGroupAsJSON, exportGroupAsExcel } from '../lib/api'
+import { useToast } from '../context/ToastContext'
+import { exportGroupAsJSON, exportGroupAsExcel, createManualItem } from '../lib/api'
 
 const GroupCard = ({ group }) => {
-  const { deleteGroup, removeItemFromGroup, updateGroup } = useApp()
+  const { deleteGroup, removeItemFromGroup, updateGroup, fetchGroups } = useApp()
+  const toast = useToast()
   const [expanded, setExpanded] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(group.group_name)
+  const [showManualItemModal, setShowManualItemModal] = useState(false)
+  const [manualItemTitle, setManualItemTitle] = useState('')
+  const [manualItemDescription, setManualItemDescription] = useState('')
+  const [creatingManualItem, setCreatingManualItem] = useState(false)
 
   // Handle group deletion
   const handleDelete = async () => {
@@ -74,6 +81,29 @@ const GroupCard = ({ group }) => {
       handleSaveName()
     } else if (e.key === 'Escape') {
       handleCancelEdit()
+    }
+  }
+
+  // Handle manual item creation
+  const handleCreateManualItem = async () => {
+    if (!manualItemTitle.trim()) {
+      toast.error('Başlık gereklidir')
+      return
+    }
+
+    try {
+      setCreatingManualItem(true)
+      await createManualItem(group.group_id, manualItemTitle, manualItemDescription)
+      toast.success('Manuel öğe başarıyla eklendi')
+      setManualItemTitle('')
+      setManualItemDescription('')
+      setShowManualItemModal(false)
+      await fetchGroups()
+    } catch (err) {
+      console.error('Failed to create manual item:', err)
+      toast.error('Manuel öğe eklenemedi')
+    } finally {
+      setCreatingManualItem(false)
     }
   }
 
@@ -148,6 +178,17 @@ const GroupCard = ({ group }) => {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
+            {/* Add Manual Item Button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowManualItemModal(true)}
+              title="Manuel öğe ekle"
+            >
+              <UserPlus className="h-4 w-4 mr-1" />
+              Manuel Öğe
+            </Button>
+
             {/* Export Buttons */}
             <a
               href={exportGroupAsJSON(group.group_id)}
@@ -216,6 +257,11 @@ const GroupCard = ({ group }) => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             <span className="font-mono text-sm font-medium">{item.id}</span>
+                            {item.source_type === 'manual' && (
+                              <Badge variant="default" className="text-xs bg-purple-500 hover:bg-purple-600">
+                                MANUEL
+                              </Badge>
+                            )}
                             {item.in_links.length > 0 && (
                               <Badge variant="outline" className="text-xs">
                                 ← {item.in_links.length}
@@ -291,6 +337,62 @@ const GroupCard = ({ group }) => {
           </div>
         </CardContent>
       )}
+
+      {/* Manual Item Creation Modal */}
+      <Modal
+        isOpen={showManualItemModal}
+        onClose={() => setShowManualItemModal(false)}
+        title="Manuel Öğe Ekle"
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setShowManualItemModal(false)}>
+              İptal
+            </Button>
+            <Button
+              onClick={handleCreateManualItem}
+              disabled={!manualItemTitle.trim() || creatingManualItem}
+            >
+              {creatingManualItem ? 'Ekleniyor...' : 'Ekle'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Başlık <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              value={manualItemTitle}
+              onChange={(e) => setManualItemTitle(e.target.value)}
+              placeholder="Öğe başlığını girin..."
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              autoFocus
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Açıklama (Opsiyonel)
+            </label>
+            <textarea
+              value={manualItemDescription}
+              onChange={(e) => setManualItemDescription(e.target.value)}
+              placeholder="Ek açıklama veya notlar..."
+              rows={4}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-none"
+            />
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Manuel öğeler otomatik ID ile oluşturulur ve gruba eklenir.
+          </p>
+        </div>
+      </Modal>
     </Card>
   )
 }

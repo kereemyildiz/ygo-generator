@@ -10,12 +10,20 @@ from datetime import datetime
 # ===== Item Schemas =====
 
 class ItemData(BaseModel):
-    """Schema for item data from Excel files."""
+    """Schema for item data from Excel files or manual entry."""
     id: str = Field(..., description="Unique item ID")
-    source_file: str = Field(..., description="Name of source Excel file")
-    data: Dict[str, Any] = Field(..., description="All row data from Excel")
+    source_file: str = Field(..., description="Name of source Excel file or 'manual'")
+    source_type: str = Field(default="excel", description="Type of item: 'excel' or 'manual'")
+    data: Dict[str, Any] = Field(..., description="All row data from Excel or manual fields")
     in_links: List[str] = Field(default_factory=list, description="List of incoming link IDs")
     out_links: List[str] = Field(default_factory=list, description="List of outgoing link IDs")
+
+
+class CreateManualItemRequest(BaseModel):
+    """Request to create a manual item in a group."""
+    group_id: str = Field(..., description="ID of the group to add item to")
+    title: str = Field(..., description="Title of the manual item")
+    description: Optional[str] = Field(None, description="Optional description/notes")
 
 
 # ===== File Upload Schemas =====
