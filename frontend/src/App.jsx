@@ -7,6 +7,7 @@ import { AppProvider, useApp } from './context/AppContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Header from './components/Header'
 import FileUpload from './components/FileUpload'
+import FileExplorer from './components/FileExplorer'
 import GroupList from './components/GroupList'
 import OrphanedItems from './components/OrphanedItems'
 import { Alert, AlertDescription } from './components/ui/Alert'
@@ -14,7 +15,7 @@ import { AlertCircle, CheckCircle } from 'lucide-react'
 
 // Main content component (wrapped by providers)
 const AppContent = () => {
-  const { error, message, clearError } = useApp()
+  const { error, message, clearError, uploadedFiles } = useApp()
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
@@ -46,6 +47,13 @@ const AppContent = () => {
 
         {/* File Upload Section */}
         <FileUpload />
+
+        {/* File Explorer Section */}
+        {uploadedFiles.length > 0 && (
+          <div className="mb-12">
+            <FileExplorer uploadedFiles={uploadedFiles} />
+          </div>
+        )}
 
         {/* Groups List Section */}
         <GroupList />

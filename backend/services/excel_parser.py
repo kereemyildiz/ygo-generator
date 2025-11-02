@@ -130,7 +130,11 @@ class ExcelParser:
                 continue
 
             # Convert row to dictionary (all columns)
-            item_data = row.to_dict()
+            # Replace NaN values with None for JSON serialization
+            item_data = row.fillna('').to_dict()
+            # Convert empty strings back to None and handle NaN
+            item_data = {k: (None if v == '' or (isinstance(v, float) and pd.isna(v)) else v)
+                        for k, v in item_data.items()}
 
             # Parse In_Link and Out_Link
             in_links = []

@@ -88,6 +88,52 @@ export const analyzeFiles = async (filePaths = null) => {
   return response.data
 }
 
+// ===== File Viewer API =====
+
+/**
+ * Get file statistics without loading all data
+ * @param {string} filename - Name of the file
+ * @returns {Promise} File statistics
+ */
+export const getFileStats = async (filename) => {
+  const response = await api.get(`/files/${filename}/stats`)
+  return response.data
+}
+
+/**
+ * Get paginated file data with filtering
+ * @param {string} filename - Name of the file
+ * @param {number} offset - Starting index
+ * @param {number} limit - Number of items to return
+ * @param {boolean} filterOrphaned - Filter orphaned items only
+ * @param {string} search - Search term
+ * @returns {Promise} Paginated file data
+ */
+export const getFileData = async (filename, offset = 0, limit = 100, filterOrphaned = null, search = null) => {
+  const params = new URLSearchParams()
+  params.append('offset', offset)
+  params.append('limit', limit)
+  if (filterOrphaned !== null) {
+    params.append('filter_orphaned', filterOrphaned)
+  }
+  if (search) {
+    params.append('search', search)
+  }
+
+  const response = await api.get(`/files/${filename}/data?${params.toString()}`)
+  return response.data
+}
+
+/**
+ * Get all file data for client-side virtual scrolling
+ * @param {string} filename - Name of the file
+ * @returns {Promise} All file data
+ */
+export const getFileAllData = async (filename) => {
+  const response = await api.get(`/files/${filename}/all`)
+  return response.data
+}
+
 // ===== Group API =====
 
 /**

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from routes import upload, groups
+from routes import upload, groups, files
 
 
 # Create FastAPI application
@@ -30,6 +30,8 @@ app.add_middleware(
 )
 
 # Include routers
+# Register files router before upload to prioritize more specific routes
+app.include_router(files.router)
 app.include_router(upload.router)
 app.include_router(groups.router)
 
