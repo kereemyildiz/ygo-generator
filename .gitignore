@@ -1,0 +1,30 @@
+# Project-level gitignore
+
+# Backend
+backend/__pycache__/
+backend/**/*.pyc
+backend/venv/
+backend/env/
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/test_output.json
+backend/*.json
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local

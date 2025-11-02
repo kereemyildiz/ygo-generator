@@ -1,0 +1,199 @@
+/**
+ * FileUpload Component
+ * Drag-and-drop file upload interface with file list
+ */
+
+import { useCallback, useEffect, useState } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { Upload, File, X, Loader2, AlertCircle } from 'lucide-react'
+import { useApp } from '../context/AppContext'
+import { Button } from './ui/Button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card'
+import { Alert, AlertDescription } from './ui/Alert'
+import { Badge } from './ui/Badge'
+
+const FileUpload = () => {
+  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, loading, error } = useApp()
+  const [selectedFiles, setSelectedFiles] = useState([])
+
+  // Fetch uploaded files on mount
+  useEffect(() => {
+    fetchUploadedFiles()
+  }, [fetchUploadedFiles])
+
+  // Handle file drop
+  const onDrop = useCallback((acceptedFiles) => {
+    setSelectedFiles(acceptedFiles)
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+    },
+    multiple: true,
+  })
+
+  // Handle upload
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return
+
+    try {
+      await uploadFiles(selectedFiles)
+      setSelectedFiles([])
+    } catch (err) {
+      console.error('Upload failed:', err)
+    }
+  }
+
+  // Handle analyze
+  const handleAnalyze = async () => {
+    try {
+      await analyzeFiles()
+    } catch (err) {
+      console.error('Analysis failed:', err)
+    }
+  }
+
+  // Remove selected file
+  const removeSelectedFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Upload Excel Files</CardTitle>
+        <CardDescription>
+          Upload one or more Excel files (.xlsx, .xls) containing requirements, use cases, or test scenarios
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Dropzone */}
+        <div
+          {...getRootProps()}
+          className={`
+            border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+            ${isDragActive
+              ? 'border-primary bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-primary hover:bg-accent'
+            }
+          `}
+        >
+          <input {...getInputProps()} />
+          <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          {isDragActive ? (
+            <p className="text-primary font-medium">Drop files here...</p>
+          ) : (
+            <div>
+              <p className="text-lg font-medium mb-2">
+                Drag & drop Excel files here
+              </p>
+              <p className="text-sm text-muted-foreground">
+                or click to browse files
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Selected Files */}
+        {selectedFiles.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium mb-2">Selected Files ({selectedFiles.length})</h4>
+            <div className="space-y-2">
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 border rounded-lg"
+                >
+                  <div className="flex items-center space-x-2">
+                    <File className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({(file.size / 1024).toFixed(2)} KB)
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeSelectedFile(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button
+              onClick={handleUpload}
+              disabled={loading}
+              className="w-full mt-4"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload {selectedFiles.length} File{selectedFiles.length > 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Uploaded Files List */}
+        {uploadedFiles.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium">
+                Uploaded Files ({uploadedFiles.length})
+              </h4>
+              <Button
+                onClick={handleAnalyze}
+                disabled={loading}
+                size="sm"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  'Analyze Links'
+                )}
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {uploadedFiles.map((filename, index) => (
+                <Badge key={index} variant="secondary" className="px-3 py-1">
+                  <File className="h-3 w-3 mr-1" />
+                  {filename}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* No files message */}
+        {uploadedFiles.length === 0 && selectedFiles.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No files uploaded yet. Upload Excel files to begin.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+export default FileUpload
