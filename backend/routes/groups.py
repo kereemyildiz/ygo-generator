@@ -207,6 +207,25 @@ async def update_group(group_id: str, updates: GroupUpdate):
     return GroupResponse(**group)
 
 
+@router.delete("/all")
+async def clear_all_groups():
+    """
+    Clear all groups and orphaned items.
+    Useful when resetting the application or clearing all analysis results.
+
+    Returns:
+        Success message
+    """
+    try:
+        group_manager.clear_all_groups()
+        return {"message": "All groups and orphaned items cleared successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clear groups: {str(e)}"
+        )
+
+
 @router.delete("/{group_id}")
 async def delete_group(group_id: str):
     """
@@ -444,23 +463,4 @@ async def export_group_excel(group_id: str):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to export group: {str(e)}"
-        )
-
-
-@router.delete("/all")
-async def clear_all_groups():
-    """
-    Clear all groups and orphaned items.
-    Useful when resetting the application or clearing all analysis results.
-
-    Returns:
-        Success message
-    """
-    try:
-        group_manager.clear_all_groups()
-        return {"message": "All groups and orphaned items cleared successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to clear groups: {str(e)}"
         )

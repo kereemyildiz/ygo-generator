@@ -78,15 +78,24 @@ const FileUpload = () => {
 
   // Handle clear all files
   const handleClearAll = async () => {
-    if (!window.confirm(`Delete all ${uploadedFiles.length} file(s) and reset analysis? This will also clear all groups.`)) return
+    if (!window.confirm(
+      `TÜM VERİLERİ SİFIRLA\n\n` +
+      `Bu işlem:\n` +
+      `• ${uploadedFiles.length} dosyayı silecek\n` +
+      `• Tüm grupları kaldıracak\n` +
+      `• Tüm analiz sonuçlarını temizleyecek\n\n` +
+      `Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`
+    )) return
 
     try {
       setDeleting('all')
-      // Delete all files
-      await Promise.all(uploadedFiles.map(file => deleteFile(file)))
-      // Clear all groups and analysis
+
+      // IMPORTANT: Clear groups FIRST to avoid race conditions
       await clearAllGroups()
-      // Will automatically refresh the list
+
+      // Then delete all files in parallel
+      await Promise.all(uploadedFiles.map(file => deleteFile(file)))
+
     } catch (err) {
       console.error('Clear all failed:', err)
     } finally {

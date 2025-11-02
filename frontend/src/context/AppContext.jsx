@@ -298,10 +298,11 @@ export const AppProvider = ({ children }) => {
     try {
       setLoading(true)
       await api.clearAllGroups()
+      // Immediately clear all related state
       setGroups([])
       setOrphanedItems([])
       setStatistics(null)
-      showMessage('All groups cleared successfully')
+      showMessage('Tüm gruplar ve analiz sonuçları temizlendi')
       setError(null)
     } catch (err) {
       handleError(err)
