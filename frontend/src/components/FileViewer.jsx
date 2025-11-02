@@ -75,7 +75,7 @@ export default function FileViewer({ filename, onClose }) {
     return items;
   }, [data, searchTerm, filterOrphaned]);
 
-  // Handle escape key
+  // Handle escape key and click outside
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -87,8 +87,18 @@ export default function FileViewer({ filename, onClose }) {
       }
     };
 
+    const handleClickOutside = (e) => {
+      if (showGroupMenu && !e.target.closest('.group-menu-container')) {
+        setShowGroupMenu(false);
+      }
+    };
+
     document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [onClose, showGroupMenu]);
 
   // Prevent body scroll when modal is open
@@ -216,70 +226,80 @@ export default function FileViewer({ filename, onClose }) {
 
             {/* Group Actions */}
             {selectedItems.size > 0 && (
-              <div className="relative">
+              <div className="relative group-menu-container">
                 <button
                   onClick={() => setShowGroupMenu(!showGroupMenu)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   <UserPlus className="h-4 w-4" />
                   <span className="whitespace-nowrap">
-                    Add to Group ({selectedItems.size})
+                    Gruba Ekle ({selectedItems.size})
                   </span>
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu - Fixed positioning with high z-index */}
                 {showGroupMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-72 bg-background border rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
-                    {/* Create New Group */}
-                    <div className="p-3 border-b">
-                      <div className="flex items-center gap-2 mb-2">
-                        <FolderPlus className="h-4 w-4" />
-                        <span className="font-medium text-sm">Create New Group</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Group name..."
-                          value={newGroupName}
-                          onChange={(e) => setNewGroupName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleCreateNewGroup()}
-                          className="flex-1 px-3 py-1.5 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                        <button
-                          onClick={handleCreateNewGroup}
-                          disabled={!newGroupName.trim()}
-                          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Create
-                        </button>
-                      </div>
-                    </div>
+                  <>
+                    {/* Backdrop for better visibility */}
+                    <div className="fixed inset-0 z-40" onClick={() => setShowGroupMenu(false)} />
 
-                    {/* Existing Groups */}
-                    <div className="p-2">
-                      <div className="text-xs text-muted-foreground px-2 py-1 font-medium">
-                        Add to Existing Group
-                      </div>
-                      {groups.length === 0 ? (
-                        <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                          No groups available
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-background border-2 border-primary/20 rounded-lg shadow-2xl z-50 max-h-[400px] overflow-y-auto">
+                      {/* Create New Group */}
+                      <div className="p-4 border-b bg-muted/30 sticky top-0 z-10">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FolderPlus className="h-5 w-5 text-primary" />
+                          <span className="font-semibold text-sm">Yeni Grup Oluştur</span>
                         </div>
-                      ) : (
-                        groups.map(group => (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Grup adı girin..."
+                            value={newGroupName}
+                            onChange={(e) => setNewGroupName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCreateNewGroup()}
+                            className="flex-1 px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background"
+                            autoFocus
+                          />
                           <button
-                            key={group.group_id}
-                            onClick={() => handleAddToGroup(group.group_id)}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded transition-colors"
+                            onClick={handleCreateNewGroup}
+                            disabled={!newGroupName.trim()}
+                            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            {group.group_name}
-                            <span className="text-xs text-muted-foreground ml-2">
-                              ({group.item_count} items)
-                            </span>
+                            Oluştur
                           </button>
-                        ))
-                      )}
+                        </div>
+                      </div>
+
+                      {/* Existing Groups */}
+                      <div className="p-2">
+                        <div className="text-xs font-semibold text-muted-foreground px-3 py-2 uppercase tracking-wide">
+                          Mevcut Gruplara Ekle
+                        </div>
+                        {groups.length === 0 ? (
+                          <div className="px-3 py-6 text-sm text-muted-foreground text-center">
+                            Henüz grup yok
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {groups.map(group => (
+                              <button
+                                key={group.group_id}
+                                onClick={() => handleAddToGroup(group.group_id)}
+                                className="w-full text-left px-3 py-2.5 text-sm hover:bg-primary/10 rounded-lg transition-colors group/item"
+                              >
+                                <div className="font-medium group-hover/item:text-primary transition-colors">
+                                  {group.group_name}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">
+                                  {group.item_count} öğe
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}

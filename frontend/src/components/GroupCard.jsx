@@ -53,11 +53,12 @@ const GroupCard = ({ group }) => {
     }
 
     try {
-      await updateGroup(group.group_id, { name: editedName })
+      await updateGroup(group.group_id, { group_name: editedName })
       setIsEditingName(false)
     } catch (err) {
       console.error('Failed to update group name:', err)
       setEditedName(group.group_name)
+      setIsEditingName(false)
     }
   }
 
@@ -99,14 +100,25 @@ const GroupCard = ({ group }) => {
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  onBlur={handleSaveName}
                   autoFocus
                   className="text-xl font-semibold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-background"
                 />
-                <Button size="sm" variant="ghost" onClick={handleSaveName} title="Save">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleSaveName}
+                  onMouseDown={(e) => e.preventDefault()}
+                  title="Kaydet"
+                >
                   <Check className="h-4 w-4 text-green-600" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={handleCancelEdit} title="Cancel">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleCancelEdit}
+                  onMouseDown={(e) => e.preventDefault()}
+                  title="İptal"
+                >
                   <XCircle className="h-4 w-4 text-red-600" />
                 </Button>
               </div>
