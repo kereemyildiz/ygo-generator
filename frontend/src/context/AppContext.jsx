@@ -35,12 +35,12 @@ export const AppProvider = ({ children }) => {
     const errorMessage = err.response?.data?.detail || err.message || 'Bir hata oluştu'
     toast.error(errorMessage)
     console.error('Error:', err)
-  }, [toast])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Helper to show success message
   const showMessage = useCallback((msg) => {
     toast.success(msg)
-  }, [toast])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ===== File Operations =====
 
