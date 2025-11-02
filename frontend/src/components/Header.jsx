@@ -13,56 +13,62 @@ const Header = () => {
   const { isDark, toggleTheme } = useTheme()
 
   return (
-    <header className="bg-primary text-primary-foreground shadow-lg">
-      <div className="container mx-auto px-4 py-6">
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
-            <FileSpreadsheet className="h-8 w-8" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700">
+              <FileSpreadsheet className="h-6 w-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold">SRS Link Manager</h1>
-              <p className="text-sm opacity-90">Linked Requirements Document Manager</p>
+              <h1 className="text-xl font-bold text-foreground">SRS Link Manager</h1>
+              <p className="text-xs text-muted-foreground">Requirements Traceability Tool</p>
             </div>
           </div>
 
-          {/* Right Side: Theme Toggle + Statistics */}
+          {/* Right Side: Statistics + Theme Toggle */}
           <div className="flex items-center space-x-6">
+            {/* Statistics */}
+            {statistics && (
+              <div className="hidden md:flex items-center gap-6 px-4 py-2 rounded-lg bg-muted/50">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-foreground">{statistics.total_groups}</div>
+                  <div className="text-xs text-muted-foreground">Groups</div>
+                </div>
+                <div className="h-8 w-px bg-border" />
+                <div className="text-center">
+                  <div className="text-lg font-bold text-foreground">{statistics.total_items}</div>
+                  <div className="text-xs text-muted-foreground">Items</div>
+                </div>
+                {statistics.total_groups > 0 && (
+                  <>
+                    <div className="h-8 w-px bg-border" />
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-foreground">
+                        {statistics.average_items_per_group.toFixed(1)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Avg/Group</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="text-primary-foreground hover:bg-primary-foreground/20"
+              className="rounded-lg hover:bg-muted"
               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {isDark ? (
-                <Sun className="h-5 w-5" />
+                <Sun className="h-5 w-5 text-orange-500" />
               ) : (
-                <Moon className="h-5 w-5" />
+                <Moon className="h-5 w-5 text-blue-600" />
               )}
             </Button>
-
-            {/* Statistics */}
-            {statistics && (
-              <div className="hidden md:flex items-center space-x-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{statistics.total_groups}</div>
-                  <div className="text-xs opacity-90">Groups</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{statistics.total_items}</div>
-                  <div className="text-xs opacity-90">Items</div>
-                </div>
-                {statistics.total_groups > 0 && (
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">
-                      {statistics.average_items_per_group.toFixed(1)}
-                    </div>
-                    <div className="text-xs opacity-90">Avg per Group</div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>

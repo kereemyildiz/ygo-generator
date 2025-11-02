@@ -10,6 +10,8 @@ import json
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+import os
+import time
 
 from models.schemas import (
     GroupResponse, GroupListResponse, GroupUpdate,
@@ -21,6 +23,21 @@ from services.group_manager import group_manager
 
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
+
+# Create exports directory separate from uploads
+EXPORTS_DIR = Path(__file__).parent.parent / "exports"
+EXPORTS_DIR.mkdir(exist_ok=True)
+
+
+def cleanup_old_exports():
+    """Delete export files older than 1 hour."""
+    try:
+        current_time = time.time()
+        for file_path in EXPORTS_DIR.glob("*_export_*"):
+            if current_time - file_path.stat().st_mtime > 3600:  # 1 hour
+                file_path.unlink()
+    except Exception as e:
+        print(f"Cleanup error: {e}")
 
 
 @router.get("", response_model=GroupListResponse)
@@ -262,9 +279,11 @@ async def export_group_json(group_id: str):
             detail=f"Group not found: {group_id}"
         )
 
-    # Create temporary file
-    temp_dir = Path(__file__).parent.parent / "uploads"
-    temp_file = temp_dir / f"{group_id}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    # Cleanup old exports before creating new one
+    cleanup_old_exports()
+
+    # Create temporary file in exports directory
+    temp_file = EXPORTS_DIR / f"{group_id}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
     try:
         with open(temp_file, 'w', encoding='utf-8') as f:
@@ -316,9 +335,11 @@ async def export_group_excel(group_id: str):
 
     df = pd.DataFrame(rows)
 
-    # Create temporary file
-    temp_dir = Path(__file__).parent.parent / "uploads"
-    temp_file = temp_dir / f"{group_id}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    # Cleanup old exports before creating new one
+    cleanup_old_exports()
+
+    # Create temporary file in exports directory
+    temp_file = EXPORTS_DIR / f"{group_id}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
 
     try:
         df.to_excel(temp_file, index=False, engine='openpyxl')

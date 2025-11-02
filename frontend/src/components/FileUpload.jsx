@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, File, X, Loader2, AlertCircle } from 'lucide-react'
+import { Upload, File, X, Loader2, AlertCircle, Trash2, RefreshCw } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { Button } from './ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card'
@@ -13,8 +13,9 @@ import { Alert, AlertDescription } from './ui/Alert'
 import { Badge } from './ui/Badge'
 
 const FileUpload = () => {
-  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, loading, error } = useApp()
+  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, deleteFile, loading, error } = useApp()
   const [selectedFiles, setSelectedFiles] = useState([])
+  const [deleting, setDeleting] = useState(null)
 
   // Fetch uploaded files on mount
   useEffect(() => {
@@ -59,6 +60,36 @@ const FileUpload = () => {
   // Remove selected file
   const removeSelectedFile = (index) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Handle delete uploaded file
+  const handleDeleteFile = async (filename) => {
+    if (!window.confirm(`Delete "${filename}"?`)) return
+
+    try {
+      setDeleting(filename)
+      await deleteFile(filename)
+    } catch (err) {
+      console.error('Delete failed:', err)
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  // Handle clear all files
+  const handleClearAll = async () => {
+    if (!window.confirm(`Delete all ${uploadedFiles.length} file(s) and reset analysis?`)) return
+
+    try {
+      setDeleting('all')
+      // Delete all files
+      await Promise.all(uploadedFiles.map(file => deleteFile(file)))
+      // Will automatically refresh the list
+    } catch (err) {
+      console.error('Clear all failed:', err)
+    } finally {
+      setDeleting(null)
+    }
   }
 
   return (
@@ -155,31 +186,72 @@ const FileUpload = () => {
         {/* Uploaded Files List */}
         {uploadedFiles.length > 0 && (
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">
                 Uploaded Files ({uploadedFiles.length})
               </h4>
-              <Button
-                onClick={handleAnalyze}
-                disabled={loading}
-                size="sm"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  'Analyze Links'
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleClearAll}
+                  disabled={loading || deleting === 'all'}
+                  size="sm"
+                  variant="destructive"
+                >
+                  {deleting === 'all' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Clearing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear All
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleAnalyze}
+                  disabled={loading}
+                  size="sm"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Analyze Links
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-2">
               {uploadedFiles.map((filename, index) => (
-                <Badge key={index} variant="secondary" className="px-3 py-1">
-                  <File className="h-3 w-3 mr-1" />
-                  {filename}
-                </Badge>
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 border rounded-lg bg-muted/30"
+                >
+                  <div className="flex items-center space-x-2">
+                    <File className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{filename}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteFile(filename)}
+                    disabled={deleting === filename}
+                    title="Delete file"
+                  >
+                    {deleting === filename ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4 text-destructive" />
+                    )}
+                  </Button>
+                </div>
               ))}
             </div>
           </div>

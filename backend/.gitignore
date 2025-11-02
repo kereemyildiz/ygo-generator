@@ -42,6 +42,10 @@ venv.bak/
 uploads/*
 !uploads/.gitkeep
 
+# Exports (temporary export files)
+exports/*
+!exports/.gitkeep
+
 # Test files
 .pytest_cache/
 .coverage
