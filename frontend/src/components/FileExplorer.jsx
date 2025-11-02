@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { FileSpreadsheet, Eye, AlertCircle, Database, FileX } from 'lucide-react';
 import FileViewer from './FileViewer';
 import * as api from '../lib/api';
+import { useApp } from '../context/AppContext';
 
 /**
  * File card component showing file statistics
@@ -100,7 +101,8 @@ const FileCard = ({ filename, stats, onView }) => {
  * FileExplorer Component
  * Main component for browsing uploaded files
  */
-export default function FileExplorer({ uploadedFiles }) {
+export default function FileExplorer() {
+  const { uploadedFiles } = useApp();
   const [fileStats, setFileStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

@@ -5,6 +5,7 @@
 
 import { createContext, useContext, useState, useCallback } from 'react'
 import * as api from '../lib/api'
+import { useToast } from './ToastContext'
 
 // Create context
 const AppContext = createContext(null)
@@ -20,32 +21,26 @@ export const useApp = () => {
 
 // Provider component
 export const AppProvider = ({ children }) => {
+  const toast = useToast()
+
   // State
   const [uploadedFiles, setUploadedFiles] = useState([])
   const [groups, setGroups] = useState([])
   const [orphanedItems, setOrphanedItems] = useState([])
   const [statistics, setStatistics] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [message, setMessage] = useState(null)
 
   // Helper to handle errors
   const handleError = useCallback((err) => {
-    const errorMessage = err.response?.data?.detail || err.message || 'An error occurred'
-    setError(errorMessage)
+    const errorMessage = err.response?.data?.detail || err.message || 'Bir hata oluştu'
+    toast.error(errorMessage)
     console.error('Error:', err)
-  }, [])
+  }, [toast])
 
   // Helper to show success message
   const showMessage = useCallback((msg) => {
-    setMessage(msg)
-    setTimeout(() => setMessage(null), 5000) // Auto-clear after 5 seconds
-  }, [])
-
-  // Clear error
-  const clearError = useCallback(() => {
-    setError(null)
-  }, [])
+    toast.success(msg)
+  }, [toast])
 
   // ===== File Operations =====
 
@@ -320,8 +315,6 @@ export const AppProvider = ({ children }) => {
     orphanedItems,
     statistics,
     loading,
-    error,
-    message,
     // Actions
     fetchUploadedFiles,
     uploadFiles,
@@ -339,8 +332,6 @@ export const AppProvider = ({ children }) => {
     addOrphanedToGroup,
     createGroupFromOrphaned,
     clearAllGroups,
-    clearError,
-    showMessage,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

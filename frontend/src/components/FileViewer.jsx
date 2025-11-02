@@ -5,8 +5,9 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { X, Search, Filter, FileX, Database, Loader2, FolderPlus, UserPlus } from 'lucide-react';
+import { X, Search, Filter, FileX, Database, Loader2, FolderPlus, UserPlus, Columns } from 'lucide-react';
 import VirtualizedTable from './VirtualizedTable';
+import Modal from './ui/Modal';
 import * as api from '../lib/api';
 import { useApp } from '../context/AppContext';
 
@@ -27,6 +28,9 @@ export default function FileViewer({ filename, onClose }) {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showGroupMenu, setShowGroupMenu] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(new Set());
+  const [detailItem, setDetailItem] = useState(null);
 
   // Fetch file data
   useEffect(() => {
@@ -37,6 +41,8 @@ export default function FileViewer({ filename, onClose }) {
       try {
         const result = await api.getFileAllData(filename);
         setData(result);
+        // Initialize all columns as visible (no smart defaults)
+        setVisibleColumns(new Set(result.columns));
       } catch (err) {
         setError(err.message);
       } finally {
@@ -81,6 +87,8 @@ export default function FileViewer({ filename, onClose }) {
       if (e.key === 'Escape') {
         if (showGroupMenu) {
           setShowGroupMenu(false);
+        } else if (showColumnMenu) {
+          setShowColumnMenu(false);
         } else {
           onClose();
         }
@@ -91,6 +99,9 @@ export default function FileViewer({ filename, onClose }) {
       if (showGroupMenu && !e.target.closest('.group-menu-container')) {
         setShowGroupMenu(false);
       }
+      if (showColumnMenu && !e.target.closest('.column-menu-container')) {
+        setShowColumnMenu(false);
+      }
     };
 
     document.addEventListener('keydown', handleEscape);
@@ -99,7 +110,7 @@ export default function FileViewer({ filename, onClose }) {
       document.removeEventListener('keydown', handleEscape);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [onClose, showGroupMenu]);
+  }, [onClose, showGroupMenu, showColumnMenu]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -163,6 +174,33 @@ export default function FileViewer({ filename, onClose }) {
     }
   };
 
+  // Toggle column visibility
+  const handleToggleColumn = (column) => {
+    setVisibleColumns(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(column)) {
+        // Don't allow hiding all columns
+        if (newSet.size > 1) {
+          newSet.delete(column);
+        }
+      } else {
+        newSet.add(column);
+      }
+      return newSet;
+    });
+  };
+
+  // Get filtered columns
+  const displayColumns = useMemo(() => {
+    if (!data?.columns) return [];
+    return data.columns.filter(col => visibleColumns.has(col));
+  }, [data, visibleColumns]);
+
+  // Handle row double-click to show details
+  const handleRowDoubleClick = (item) => {
+    setDetailItem(item);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       {/* Modal Container */}
@@ -202,6 +240,49 @@ export default function FileViewer({ filename, onClose }) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
               />
+            </div>
+
+            {/* Column Visibility */}
+            <div className="relative column-menu-container">
+              <button
+                onClick={() => setShowColumnMenu(!showColumnMenu)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors"
+                title="Sütunları Göster/Gizle"
+              >
+                <Columns className="h-4 w-4" />
+                <span className="whitespace-nowrap">Sütunlar</span>
+              </button>
+
+              {/* Column dropdown */}
+              {showColumnMenu && data?.columns && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowColumnMenu(false)} />
+                  <div className="absolute left-0 top-full mt-2 w-64 bg-background border-2 border-primary/20 rounded-lg shadow-2xl z-50 max-h-[400px] overflow-y-auto">
+                    <div className="p-3">
+                      <div className="text-xs font-semibold text-muted-foreground px-2 py-2 uppercase tracking-wide">
+                        Görünür Sütunlar ({visibleColumns.size}/{data.columns.length})
+                      </div>
+                      <div className="space-y-1">
+                        {data.columns.map(column => (
+                          <label
+                            key={column}
+                            className="flex items-center gap-2 px-2 py-2 hover:bg-muted rounded cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={visibleColumns.has(column)}
+                              onChange={() => handleToggleColumn(column)}
+                              disabled={visibleColumns.has(column) && visibleColumns.size === 1}
+                              className="h-4 w-4 cursor-pointer"
+                            />
+                            <span className="text-sm flex-1 truncate">{column}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Filter Orphaned */}
@@ -344,7 +425,7 @@ export default function FileViewer({ filename, onClose }) {
               {filteredItems.length > 0 ? (
                 <VirtualizedTable
                   items={filteredItems}
-                  columns={data.columns}
+                  columns={displayColumns}
                   searchTerm={searchTerm}
                   height={window.innerHeight - 280}
                   rowHeight={48}
@@ -353,6 +434,7 @@ export default function FileViewer({ filename, onClose }) {
                   onSelectItem={handleSelectItem}
                   selectedAll={selectedItems.size === filteredItems.length}
                   onSelectAll={handleSelectAll}
+                  onRowDoubleClick={handleRowDoubleClick}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -369,6 +451,79 @@ export default function FileViewer({ filename, onClose }) {
           )}
         </div>
       </div>
+
+      {/* Item Detail Modal */}
+      {detailItem && (
+        <Modal
+          isOpen={true}
+          onClose={() => setDetailItem(null)}
+          title={`Öğe Detayları: ${detailItem.id}`}
+          size="lg"
+        >
+          <div className="space-y-4">
+            {/* ID */}
+            <div className="pb-3 border-b">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                ID
+              </div>
+              <div className="font-mono text-lg font-medium">{detailItem.id}</div>
+            </div>
+
+            {/* Links */}
+            {(detailItem.in_links?.length > 0 || detailItem.out_links?.length > 0) && (
+              <div className="pb-3 border-b">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  Bağlantılar
+                </div>
+                <div className="space-y-2">
+                  {detailItem.in_links?.length > 0 && (
+                    <div>
+                      <div className="text-sm font-medium mb-1">
+                        Gelen Bağlantılar ({detailItem.in_links.length})
+                      </div>
+                      <div className="text-sm text-muted-foreground font-mono">
+                        {detailItem.in_links.join(', ')}
+                      </div>
+                    </div>
+                  )}
+                  {detailItem.out_links?.length > 0 && (
+                    <div>
+                      <div className="text-sm font-medium mb-1">
+                        Giden Bağlantılar ({detailItem.out_links.length})
+                      </div>
+                      <div className="text-sm text-muted-foreground font-mono">
+                        {detailItem.out_links.join(', ')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* All Data Fields */}
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Tüm Alanlar
+              </div>
+              <div className="space-y-3">
+                {data?.columns.map((col) => {
+                  const value = detailItem.data?.[col] ?? detailItem[col] ?? '';
+                  const displayValue = Array.isArray(value) ? value.join(', ') : String(value);
+
+                  return (
+                    <div key={col} className="grid grid-cols-3 gap-4">
+                      <div className="font-medium text-sm">{col}:</div>
+                      <div className="col-span-2 text-sm text-muted-foreground break-words">
+                        {displayValue || <span className="italic text-muted-foreground/50">N/A</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

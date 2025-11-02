@@ -3,57 +3,28 @@
  * Main application component
  */
 
-import { AppProvider, useApp } from './context/AppContext'
+import { AppProvider } from './context/AppContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { ConfirmProvider } from './context/ConfirmContext'
+import { ToastProvider } from './context/ToastContext'
 import Header from './components/Header'
 import FileUpload from './components/FileUpload'
 import FileExplorer from './components/FileExplorer'
 import GroupList from './components/GroupList'
 import OrphanedItems from './components/OrphanedItems'
-import { Alert, AlertDescription } from './components/ui/Alert'
-import { AlertCircle, CheckCircle } from 'lucide-react'
 
 // Main content component (wrapped by providers)
 const AppContent = () => {
-  const { error, message, clearError, uploadedFiles } = useApp()
-
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Global Messages */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <button
-                onClick={clearError}
-                className="ml-4 underline hover:no-underline"
-              >
-                Dismiss
-              </button>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {message && (
-          <Alert variant="success" className="mb-6">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
-
         {/* File Upload Section */}
         <FileUpload />
 
         {/* File Explorer Section */}
-        {uploadedFiles.length > 0 && (
-          <div className="mb-12">
-            <FileExplorer uploadedFiles={uploadedFiles} />
-          </div>
-        )}
+        <FileExplorer />
 
         {/* Groups List Section */}
         <GroupList />
@@ -65,8 +36,8 @@ const AppContent = () => {
       {/* Footer */}
       <footer className="bg-muted py-6 mt-12">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>SRS Link Manager - Linked Requirements Document Manager</p>
-          <p className="mt-1">Built with React, FastAPI, and NetworkX</p>
+          <p>ASEL Trace - İzlenebilirlik ve Bağlantı Yönetim Sistemi</p>
+          <p className="mt-1">React, FastAPI ve NetworkX ile geliştirildi</p>
         </div>
       </footer>
     </div>
@@ -77,9 +48,13 @@ const AppContent = () => {
 const App = () => {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </ConfirmProvider>
+      </ToastProvider>
     </ThemeProvider>
   )
 }

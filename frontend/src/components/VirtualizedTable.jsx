@@ -40,7 +40,7 @@ const TableHeader = ({ columns, selectable, selectedAll, onSelectAll }) => (
  * Memoized for performance
  */
 const Row = memo(({ data, index, style }) => {
-  const { items, columns, searchTerm, selectable, selectedItems, onSelectItem } = data;
+  const { items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick } = data;
   const item = items[index];
   const isSelected = selectable && selectedItems?.has(item.id);
 
@@ -94,9 +94,11 @@ const Row = memo(({ data, index, style }) => {
   return (
     <div
       style={style}
-      className={`flex border-b hover:bg-muted/50 transition-colors ${
+      className={`flex border-b hover:bg-muted/50 transition-colors cursor-pointer ${
         index % 2 === 0 ? 'bg-background' : 'bg-muted/20'
       } ${isSelected ? 'bg-blue-50 dark:bg-blue-950' : ''}`}
+      onDoubleClick={() => onRowDoubleClick?.(item)}
+      title="Çift tıklayarak detayları görüntüleyin"
     >
       {selectable && (
         <div className="w-12 px-4 py-3 flex items-center justify-center">
@@ -104,6 +106,7 @@ const Row = memo(({ data, index, style }) => {
             type="checkbox"
             checked={isSelected}
             onChange={() => onSelectItem(item.id)}
+            onClick={(e) => e.stopPropagation()}
             className="h-4 w-4 cursor-pointer"
           />
         </div>
@@ -153,7 +156,8 @@ export default function VirtualizedTable({
   selectedItems = new Set(),
   onSelectItem = () => {},
   selectedAll = false,
-  onSelectAll = () => {}
+  onSelectAll = () => {},
+  onRowDoubleClick = null
 }) {
   if (!items.length) {
     return (
@@ -184,7 +188,7 @@ export default function VirtualizedTable({
         itemCount={items.length}
         itemSize={rowHeight}
         width="100%"
-        itemData={{ items, columns, searchTerm, selectable, selectedItems, onSelectItem }}
+        itemData={{ items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick }}
       >
         {Row}
       </List>
