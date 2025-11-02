@@ -2,45 +2,86 @@
  * VirtualizedTable Component
  * High-performance table using react-window for rendering large datasets
  * Only renders visible rows for optimal performance with 1000+ items
+ * Supports resizable columns
  */
 
 import { FixedSizeList as List } from 'react-window';
-import { memo } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 
 /**
- * Header component for the virtualized table
+ * Header component for the virtualized table with resizable columns
  */
-const TableHeader = ({ columns, selectable, selectedAll, onSelectAll }) => (
-  <div className="sticky top-0 z-10 border-b bg-muted/50 backdrop-blur">
-    <div className="flex">
-      {selectable && (
-        <div className="w-12 px-4 py-3 flex items-center justify-center">
-          <input
-            type="checkbox"
-            checked={selectedAll}
-            onChange={onSelectAll}
-            className="h-4 w-4 cursor-pointer"
-          />
-        </div>
-      )}
-      {columns.map((col, idx) => (
-        <div
-          key={idx}
-          className="flex-1 min-w-[150px] px-4 py-3 text-sm font-medium text-muted-foreground"
-        >
-          {col}
-        </div>
-      ))}
+const TableHeader = ({ columns, selectable, selectedAll, onSelectAll, columnWidths, onColumnResize }) => {
+  const [resizing, setResizing] = useState(null);
+  const headerRef = useRef(null);
+
+  const handleMouseDown = (e, colIndex) => {
+    e.preventDefault();
+    setResizing({ colIndex, startX: e.pageX, startWidth: columnWidths[colIndex] });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!resizing) return;
+
+    const diff = e.pageX - resizing.startX;
+    const newWidth = Math.max(100, resizing.startWidth + diff); // Min width 100px
+    onColumnResize(resizing.colIndex, newWidth);
+  };
+
+  const handleMouseUp = () => {
+    setResizing(null);
+  };
+
+  // Add global mouse listeners when resizing
+  if (resizing) {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }
+
+  return (
+    <div ref={headerRef} className="sticky top-0 z-10 border-b bg-muted/50 backdrop-blur">
+      <div className="flex">
+        {selectable && (
+          <div className="w-12 px-4 py-3 flex items-center justify-center flex-shrink-0">
+            <input
+              type="checkbox"
+              checked={selectedAll}
+              onChange={onSelectAll}
+              className="h-4 w-4 cursor-pointer"
+            />
+          </div>
+        )}
+        {columns.map((col, idx) => (
+          <div
+            key={idx}
+            className="px-4 py-3 text-sm font-medium text-muted-foreground relative flex-shrink-0"
+            style={{ width: `${columnWidths[idx]}px` }}
+          >
+            <div className="truncate">{col}</div>
+            {/* Resize Handle */}
+            <div
+              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 group"
+              onMouseDown={(e) => handleMouseDown(e, idx)}
+            >
+              <div className="absolute inset-y-0 -left-1 -right-1" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * Row component for the virtualized table
  * Memoized for performance
  */
 const Row = memo(({ data, index, style }) => {
-  const { items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick } = data;
+  const { items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick, columnWidths } = data;
   const item = items[index];
   const isSelected = selectable && selectedItems?.has(item.id);
 
@@ -101,7 +142,7 @@ const Row = memo(({ data, index, style }) => {
       title="Çift tıklayarak detayları görüntüleyin"
     >
       {selectable && (
-        <div className="w-12 px-4 py-3 flex items-center justify-center">
+        <div className="w-12 px-4 py-3 flex items-center justify-center flex-shrink-0">
           <input
             type="checkbox"
             checked={isSelected}
@@ -118,7 +159,8 @@ const Row = memo(({ data, index, style }) => {
         return (
           <div
             key={idx}
-            className="flex-1 min-w-[150px] px-4 py-3 text-sm truncate"
+            className="px-4 py-3 text-sm truncate flex-shrink-0"
+            style={{ width: `${columnWidths[idx]}px` }}
             title={String(displayValue)}
           >
             {highlightText(displayValue, searchTerm)}
@@ -145,6 +187,7 @@ Row.displayName = 'VirtualizedRow';
  * @param {Function} props.onSelectItem - Callback when item is selected
  * @param {boolean} props.selectedAll - All items selected
  * @param {Function} props.onSelectAll - Callback when select all is toggled
+ * @param {Function} props.onRowDoubleClick - Callback when row is double-clicked
  */
 export default function VirtualizedTable({
   items = [],
@@ -159,6 +202,24 @@ export default function VirtualizedTable({
   onSelectAll = () => {},
   onRowDoubleClick = null
 }) {
+  // Initialize column widths (200px default for each column)
+  const [columnWidths, setColumnWidths] = useState(() =>
+    columns.map(() => 200)
+  );
+
+  // Update column widths when columns change
+  useEffect(() => {
+    setColumnWidths(columns.map(() => 200));
+  }, [columns.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleColumnResize = (colIndex, newWidth) => {
+    setColumnWidths(prev => {
+      const newWidths = [...prev];
+      newWidths[colIndex] = newWidth;
+      return newWidths;
+    });
+  };
+
   if (!items.length) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -182,13 +243,15 @@ export default function VirtualizedTable({
         selectable={selectable}
         selectedAll={selectedAll}
         onSelectAll={onSelectAll}
+        columnWidths={columnWidths}
+        onColumnResize={handleColumnResize}
       />
       <List
         height={height}
         itemCount={items.length}
         itemSize={rowHeight}
         width="100%"
-        itemData={{ items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick }}
+        itemData={{ items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick, columnWidths }}
       >
         {Row}
       </List>
