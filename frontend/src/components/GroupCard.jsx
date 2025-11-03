@@ -196,17 +196,6 @@ const GroupCard = ({ group }) => {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
-            {/* Add Manual Item Button */}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowManualItemModal(true)}
-              title="Manuel Madde ekle"
-            >
-              <FilePlus className="h-4 w-4 mr-1" />
-              Manuel Madde
-            </Button>
-
             {/* Generate SRS Button - AI Feature (Demo) */}
             <Button
               size="sm"
@@ -215,6 +204,17 @@ const GroupCard = ({ group }) => {
             >
               <Sparkles className="h-4 w-4 mr-1" />
               YGÖ Maddesi Üret
+            </Button>
+
+            {/* Add Manual Item Button */}
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-0 shadow-md hover:shadow-lg transition-all"
+              onClick={() => setShowManualItemModal(true)}
+              title="Manuel Madde ekle"
+            >
+              <FilePlus className="h-4 w-4 mr-1" />
+              Manuel Madde
             </Button>
 
             {/* Export Buttons */}
