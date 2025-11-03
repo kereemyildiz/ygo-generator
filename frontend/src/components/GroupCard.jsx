@@ -12,11 +12,13 @@ import Modal from './ui/Modal'
 import { getFileColor } from '../lib/utils'
 import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
+import { useConfirm } from '../context/ConfirmContext'
 import { exportGroupAsJSON, exportGroupAsExcel, createManualItem } from '../lib/api'
 
 const GroupCard = ({ group }) => {
   const { deleteGroup, removeItemFromGroup, updateGroup, fetchGroups } = useApp()
   const toast = useToast()
+  const { confirm } = useConfirm()
   const [expanded, setExpanded] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
@@ -28,26 +30,42 @@ const GroupCard = ({ group }) => {
 
   // Handle group deletion
   const handleDelete = async () => {
-    if (window.confirm(`${group.group_name} grubunu silmek istediğinizden emin misiniz?`)) {
-      try {
-        await deleteGroup(group.group_id)
-      } catch (err) {
-        console.error('Failed to delete group:', err)
-      }
+    const confirmed = await confirm({
+      title: 'Grubu Sil',
+      message: `"${group.group_name}" grubunu silmek istediğinizden emin misiniz?`,
+      confirmText: 'Sil',
+      cancelText: 'İptal',
+      variant: 'destructive'
+    })
+
+    if (!confirmed) return
+
+    try {
+      await deleteGroup(group.group_id)
+    } catch (err) {
+      console.error('Failed to delete group:', err)
     }
   }
 
   // Handle item removal
   const handleRemoveItem = async (itemId) => {
-    if (window.confirm('Bu maddeyi gruptan çıkarmak istediğinizden emin misiniz?')) {
-      try {
-        setRemoving(true)
-        await removeItemFromGroup(group.group_id, itemId)
-      } catch (err) {
-        console.error('Failed to remove item:', err)
-      } finally {
-        setRemoving(false)
-      }
+    const confirmed = await confirm({
+      title: 'Maddeyi Çıkar',
+      message: 'Bu maddeyi gruptan çıkarmak istediğinizden emin misiniz?',
+      confirmText: 'Çıkar',
+      cancelText: 'İptal',
+      variant: 'destructive'
+    })
+
+    if (!confirmed) return
+
+    try {
+      setRemoving(true)
+      await removeItemFromGroup(group.group_id, itemId)
+    } catch (err) {
+      console.error('Failed to remove item:', err)
+    } finally {
+      setRemoving(false)
     }
   }
 

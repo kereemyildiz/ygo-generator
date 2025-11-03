@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, File, X, Loader2, AlertCircle, Trash2, RefreshCw } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useConfirm } from '../context/ConfirmContext'
 import { Button } from './ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card'
 import { Alert, AlertDescription } from './ui/Alert'
@@ -14,6 +15,7 @@ import { Badge } from './ui/Badge'
 
 const FileUpload = () => {
   const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, deleteFile, clearAllGroups, loading, error } = useApp()
+  const { confirm } = useConfirm()
   const [selectedFiles, setSelectedFiles] = useState([])
   const [deleting, setDeleting] = useState(null)
 
@@ -64,7 +66,15 @@ const FileUpload = () => {
 
   // Handle delete uploaded file
   const handleDeleteFile = async (filename) => {
-    if (!window.confirm(`"${filename}" dosyasını silmek istediğinizden emin misiniz?`)) return
+    const confirmed = await confirm({
+      title: 'Dosyayı Sil',
+      message: `"${filename}" dosyasını silmek istediğinizden emin misiniz?`,
+      confirmText: 'Sil',
+      cancelText: 'İptal',
+      variant: 'destructive'
+    })
+
+    if (!confirmed) return
 
     try {
       setDeleting(filename)
@@ -78,14 +88,27 @@ const FileUpload = () => {
 
   // Handle clear all files
   const handleClearAll = async () => {
-    if (!window.confirm(
-      `TÜM VERİLERİ SİFIRLA\n\n` +
-      `Bu işlem:\n` +
-      `• ${uploadedFiles.length} dosyayı silecek\n` +
-      `• Tüm grupları kaldıracak\n` +
-      `• Tüm analiz sonuçlarını temizleyecek\n\n` +
-      `Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`
-    )) return
+    const confirmed = await confirm({
+      title: 'TÜM VERİLERİ SİFIRLA',
+      message: (
+        <div className="space-y-3">
+          <p className="font-medium">Bu işlem:</p>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li>{uploadedFiles.length} dosyayı silecek</li>
+            <li>Tüm grupları kaldıracak</li>
+            <li>Tüm analiz sonuçlarını temizleyecek</li>
+          </ul>
+          <p className="text-sm font-semibold text-destructive">
+            Bu işlem geri alınamaz. Devam etmek istiyor musunuz?
+          </p>
+        </div>
+      ),
+      confirmText: 'Evet, Tümünü Sil',
+      cancelText: 'İptal',
+      variant: 'destructive'
+    })
+
+    if (!confirmed) return
 
     try {
       setDeleting('all')

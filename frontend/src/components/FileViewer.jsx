@@ -296,7 +296,7 @@ export default function FileViewer({ filename, onClose }) {
             >
               <FileX className="h-4 w-4" />
               <span className="whitespace-nowrap">
-                {filterOrphaned ? 'Yetimler Gösteriliyor' : 'Yetimleri Göster'}
+                {filterOrphaned ? 'Linklenmeyenler Gösteriliyor' : 'Linklenmeyenleri Göster'}
               </span>
             </button>
 

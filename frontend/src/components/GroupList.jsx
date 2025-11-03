@@ -33,9 +33,9 @@ const GroupList = () => {
     return (
       <Alert>
         <FolderOpen className="h-4 w-4" />
-        <AlertTitle>No Groups Found</AlertTitle>
+        <AlertTitle>Grup Bulunamadı</AlertTitle>
         <AlertDescription>
-          Upload Excel files and click "Analyze Links" to create groups based on link relationships.
+          Excel dosyaları yükleyin ve "Bağlantıları Analiz Et" butonuna tıklayarak bağlantılı olan maddeleri gruplayın.
         </AlertDescription>
       </Alert>
     )
