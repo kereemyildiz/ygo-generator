@@ -35,9 +35,21 @@ const AppContent = () => {
 
       {/* Footer */}
       <footer className="bg-muted py-6 mt-12">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>ASEL Trace - İzlenebilirlik ve Bağlantı Yönetim Sistemi</p>
-          <p className="mt-1">React, FastAPI ve NetworkX ile geliştirildi</p>
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center gap-4">
+            {/* Logo */}
+            <img
+              src="/aselsan_Logo.gif"
+              alt="ASELSAN Logo"
+              className="h-8 object-contain opacity-80"
+            />
+
+            {/* Text */}
+            <div className="text-center text-sm text-muted-foreground">
+              <p className="font-medium">ASEL Trace - İzlenebilirlik ve Bağlantı Yönetim Sistemi</p>
+              <p className="mt-1">React, FastAPI ve NetworkX ile geliştirildi</p>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

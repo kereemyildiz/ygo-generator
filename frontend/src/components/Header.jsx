@@ -19,9 +19,11 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700">
-              <FileSpreadsheet className="h-6 w-6 text-white" />
-            </div>
+            <img
+              src="/aselsan_Logo.gif"
+              alt="ASELSAN Logo"
+              className="h-10 object-contain"
+            />
             <div>
               <h1 className="text-xl font-bold text-foreground">{tr.appName}</h1>
               <p className="text-xs text-muted-foreground">{tr.appTagline}</p>
