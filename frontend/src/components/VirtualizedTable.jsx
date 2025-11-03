@@ -20,27 +20,28 @@ const TableHeader = ({ columns, selectable, selectedAll, onSelectAll, columnWidt
     setResizing({ colIndex, startX: e.pageX, startWidth: columnWidths[colIndex] });
   };
 
-  const handleMouseMove = (e) => {
+  // Add global mouse listeners when resizing
+  useEffect(() => {
     if (!resizing) return;
 
-    const diff = e.pageX - resizing.startX;
-    const newWidth = Math.max(100, resizing.startWidth + diff); // Min width 100px
-    onColumnResize(resizing.colIndex, newWidth);
-  };
+    const handleMouseMove = (e) => {
+      const diff = e.pageX - resizing.startX;
+      const newWidth = Math.max(100, resizing.startWidth + diff); // Min width 100px
+      onColumnResize(resizing.colIndex, newWidth);
+    };
 
-  const handleMouseUp = () => {
-    setResizing(null);
-  };
+    const handleMouseUp = () => {
+      setResizing(null);
+    };
 
-  // Add global mouse listeners when resizing
-  if (resizing) {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }
+  }, [resizing, onColumnResize]);
 
   return (
     <div ref={headerRef} className="sticky top-0 z-10 border-b bg-muted/50 backdrop-blur">
