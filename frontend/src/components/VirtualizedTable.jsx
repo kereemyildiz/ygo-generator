@@ -11,7 +11,7 @@ import { memo, useState, useRef, useEffect } from 'react';
 /**
  * Header component for the virtualized table with resizable columns
  */
-const TableHeader = ({ columns, selectable, selectedAll, onSelectAll, columnWidths, onColumnResize }) => {
+const TableHeader = ({ columns, selectable, selectedAll, onSelectAll, columnWidths, onColumnResize, scrollLeft }) => {
   const [resizing, setResizing] = useState(null);
   const headerRef = useRef(null);
 
@@ -43,8 +43,15 @@ const TableHeader = ({ columns, selectable, selectedAll, onSelectAll, columnWidt
     };
   }, [resizing, onColumnResize]);
 
+  // Sync horizontal scroll with table body
+  useEffect(() => {
+    if (headerRef.current) {
+      headerRef.current.scrollLeft = scrollLeft;
+    }
+  }, [scrollLeft]);
+
   return (
-    <div ref={headerRef} className="sticky top-0 z-10 border-b bg-muted/50 backdrop-blur">
+    <div ref={headerRef} className="sticky top-0 z-10 border-b bg-muted/50 backdrop-blur overflow-hidden">
       <div className="flex">
         {selectable && (
           <div className="w-12 px-4 py-3 flex items-center justify-center flex-shrink-0">
@@ -207,6 +214,8 @@ export default function VirtualizedTable({
   const [columnWidths, setColumnWidths] = useState(() =>
     columns.map(() => 200)
   );
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const listRef = useRef(null);
 
   // Update column widths when columns change
   useEffect(() => {
@@ -219,6 +228,11 @@ export default function VirtualizedTable({
       newWidths[colIndex] = newWidth;
       return newWidths;
     });
+  };
+
+  // Handle scroll to sync header
+  const handleScroll = ({ scrollLeft }) => {
+    setScrollLeft(scrollLeft);
   };
 
   if (!items.length) {
@@ -246,12 +260,15 @@ export default function VirtualizedTable({
         onSelectAll={onSelectAll}
         columnWidths={columnWidths}
         onColumnResize={handleColumnResize}
+        scrollLeft={scrollLeft}
       />
       <List
+        ref={listRef}
         height={height}
         itemCount={items.length}
         itemSize={rowHeight}
         width="100%"
+        onScroll={handleScroll}
         itemData={{ items, columns, searchTerm, selectable, selectedItems, onSelectItem, onRowDoubleClick, columnWidths }}
       >
         {Row}

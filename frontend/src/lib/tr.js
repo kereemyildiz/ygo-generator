@@ -166,7 +166,7 @@ export const tr = {
   // Footer
   footer: {
     tagline: 'Bağlantılı Gereksinim Dokümanı Yöneticisi',
-    builtWith: 'React, FastAPI ve NetworkX ile geliştirildi',
+    builtWith: 'made by aky',
   },
 
   // Error Messages

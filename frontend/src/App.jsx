@@ -47,7 +47,7 @@ const AppContent = () => {
             {/* Text */}
             <div className="text-center text-sm text-muted-foreground">
               <p className="font-medium">ASEL Trace - İzlenebilirlik ve Bağlantı Yönetim Sistemi</p>
-              <p className="mt-1">React, FastAPI ve NetworkX ile geliştirildi</p>
+              <p className="mt-1">made by aky</p>
             </div>
           </div>
         </div>

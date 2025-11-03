@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, FilePlus, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, FilePlus, Sparkles, CheckSquare, Square } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
@@ -27,6 +27,29 @@ const GroupCard = ({ group }) => {
   const [manualItemTitle, setManualItemTitle] = useState('')
   const [manualItemDescription, setManualItemDescription] = useState('')
   const [creatingManualItem, setCreatingManualItem] = useState(false)
+  const [selectedItems, setSelectedItems] = useState(new Set())
+
+  // Handle item selection
+  const toggleItemSelection = (itemId) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
+  }
+
+  // Select all / deselect all
+  const toggleSelectAll = () => {
+    if (selectedItems.size === group.items.length) {
+      setSelectedItems(new Set())
+    } else {
+      setSelectedItems(new Set(group.items.map(item => item.id)))
+    }
+  }
 
   // Handle group deletion
   const handleDelete = async () => {
@@ -200,10 +223,17 @@ const GroupCard = ({ group }) => {
             <Button
               size="sm"
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all"
-              title="Yapay zeka ile YGÖ maddesi üret"
+              title={selectedItems.size > 0
+                ? `Seçili ${selectedItems.size} madde için YGÖ üret`
+                : 'Tüm maddeler için YGÖ üret'}
             >
               <Sparkles className="h-4 w-4 mr-1" />
               YGÖ Maddesi Üret
+              {selectedItems.size > 0 && (
+                <Badge variant="secondary" className="ml-2 bg-white/20 hover:bg-white/30">
+                  {selectedItems.size}
+                </Badge>
+              )}
             </Button>
 
             {/* Add Manual Item Button */}
@@ -268,6 +298,32 @@ const GroupCard = ({ group }) => {
       {/* Expanded Content */}
       {expanded && (
         <CardContent>
+          {/* Selection Controls */}
+          <div className="flex items-center justify-between mb-4 pb-3 border-b">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={toggleSelectAll}
+            >
+              {selectedItems.size === group.items.length ? (
+                <>
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Tümünün Seçimini Kaldır
+                </>
+              ) : (
+                <>
+                  <Square className="h-4 w-4 mr-2" />
+                  Tümünü Seç
+                </>
+              )}
+            </Button>
+            {selectedItems.size > 0 && (
+              <Badge variant="secondary" className="text-sm">
+                {selectedItems.size} madde seçili
+              </Badge>
+            )}
+          </div>
+
           <div className="space-y-4">
             {Object.entries(itemsByFile).map(([filename, items]) => (
               <div key={filename}>
@@ -276,15 +332,33 @@ const GroupCard = ({ group }) => {
                 </div>
 
                 <div className="space-y-2">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3 border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="font-mono text-sm font-medium">{item.id}</span>
+                  {items.map((item) => {
+                    const isSelected = selectedItems.has(item.id)
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-3 border rounded-lg transition-colors ${
+                          isSelected ? 'border-primary bg-primary/5' : 'hover:bg-accent'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3 flex-1">
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => toggleItemSelection(item.id)}
+                              className="mt-0.5 flex-shrink-0"
+                              title={isSelected ? 'Seçimi kaldır' : 'Seç'}
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="h-5 w-5 text-primary" />
+                              ) : (
+                                <Square className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+                              )}
+                            </button>
+
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <span className="font-mono text-sm font-medium">{item.id}</span>
                             {item.source_type === 'manual' && (
                               <Badge variant="default" className="text-xs bg-purple-500 hover:bg-purple-600">
                                 MANUEL
@@ -344,21 +418,23 @@ const GroupCard = ({ group }) => {
                               )}
                             </div>
                           )}
-                        </div>
+                            </div>
+                          </div>
 
-                        {/* Remove Button */}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleRemoveItem(item.id)}
-                          disabled={removing}
-                          title="Gruptan çıkar"
-                        >
-                          <X className="h-4 w-4 text-destructive" />
-                        </Button>
+                          {/* Remove Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={removing}
+                            title="Gruptan çıkar"
+                          >
+                            <X className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ))}
@@ -379,7 +455,7 @@ const GroupCard = ({ group }) => {
             </Button>
             <Button
               onClick={handleCreateManualItem}
-              disabled={!manualItemTitle.trim() || creatingManualItem}
+              disabled={!manualItemDescription.trim() || creatingManualItem}
             >
               {creatingManualItem ? 'Ekleniyor...' : 'Ekle'}
             </Button>
@@ -390,7 +466,7 @@ const GroupCard = ({ group }) => {
           {/* Title */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Başlık <span className="text-destructive">*</span>
+              Başlık (Opsiyonel)
             </label>
             <input
               type="text"
@@ -405,7 +481,7 @@ const GroupCard = ({ group }) => {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Açıklama (Opsiyonel)
+              Açıklama<span className="text-destructive">*</span>
             </label>
             <textarea
               value={manualItemDescription}
