@@ -3,7 +3,8 @@
  * Expandable card displaying a group and its linked items
  */
 
-import { useState } from 'react'
+import { useState, useMemo, useRef, memo } from 'react'
+import { VariableSizeList as List } from 'react-window'
 import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, FilePlus, Sparkles, CheckSquare, Square } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
@@ -14,6 +15,134 @@ import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
 import { exportGroupAsJSON, exportGroupAsExcel, createManualItem } from '../lib/api'
+
+/**
+ * VirtualizedRow Component
+ * Renders either a file header or an item row
+ */
+const VirtualizedRow = memo(({ index, style, data }) => {
+  const { flattenedRows, selectedItems, toggleItemSelection, handleRemoveItem, removing } = data
+  const row = flattenedRows[index]
+
+  // File header row
+  if (row.type === 'header') {
+    return (
+      <div style={style} className="py-2">
+        <div className={`px-3 py-1 rounded-md inline-block text-xs font-medium ${row.color}`}>
+          {row.filename} ({row.count})
+        </div>
+      </div>
+    )
+  }
+
+  // Item row
+  const item = row.item
+  const isSelected = selectedItems.has(item.id)
+
+  return (
+    <div style={style} className="py-1">
+      <div
+        className={`p-3 border rounded-lg transition-colors ${
+          isSelected ? 'border-primary bg-primary/5' : 'hover:bg-accent'
+        }`}
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            {/* Checkbox */}
+            <button
+              onClick={() => toggleItemSelection(item.id)}
+              className="mt-0.5 flex-shrink-0"
+              title={isSelected ? 'Seçimi kaldır' : 'Seç'}
+            >
+              {isSelected ? (
+                <CheckSquare className="h-5 w-5 text-primary" />
+              ) : (
+                <Square className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+              )}
+            </button>
+
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="font-mono text-sm font-medium">{item.id}</span>
+                {item.source_type === 'manual' && (
+                  <Badge variant="default" className="text-xs bg-purple-500 hover:bg-purple-600">
+                    MANUEL
+                  </Badge>
+                )}
+                {item.in_links.length > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    ← {item.in_links.length}
+                  </Badge>
+                )}
+                {item.out_links.length > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    → {item.out_links.length}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Display item data */}
+              <div className="text-sm text-muted-foreground space-y-1">
+                {Object.entries(item.data).map(([key, value]) => {
+                  // Skip link columns and ID column (already shown)
+                  if (
+                    key.toLowerCase().includes('link') ||
+                    key.toLowerCase().includes('_id') ||
+                    key === item.id
+                  ) {
+                    return null
+                  }
+
+                  return (
+                    <div key={key} className="flex">
+                      <span className="font-medium w-32 flex-shrink-0">{key}:</span>
+                      <span className="flex-1">{value || 'N/A'}</span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Links */}
+              {(item.in_links.length > 0 || item.out_links.length > 0) && (
+                <div className="mt-2 text-xs space-y-1">
+                  {item.in_links.length > 0 && (
+                    <div>
+                      <span className="font-medium">In Links: </span>
+                      <span className="text-muted-foreground">
+                        {item.in_links.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  {item.out_links.length > 0 && (
+                    <div>
+                      <span className="font-medium">Out Links: </span>
+                      <span className="text-muted-foreground">
+                        {item.out_links.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Remove Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleRemoveItem(item.id)}
+            disabled={removing}
+            title="Gruptan çıkar"
+          >
+            <X className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+VirtualizedRow.displayName = 'VirtualizedRow'
 
 const GroupCard = ({ group }) => {
   const { deleteGroup, removeItemFromGroup, updateGroup, fetchGroups } = useApp()
@@ -28,6 +157,63 @@ const GroupCard = ({ group }) => {
   const [manualItemDescription, setManualItemDescription] = useState('')
   const [creatingManualItem, setCreatingManualItem] = useState(false)
   const [selectedItems, setSelectedItems] = useState(new Set())
+  const listRef = useRef(null)
+
+  // Group items by source file
+  const itemsByFile = useMemo(() => {
+    return group.items.reduce((acc, item) => {
+      const file = item.source_file
+      if (!acc[file]) {
+        acc[file] = []
+      }
+      acc[file].push(item)
+      return acc
+    }, {})
+  }, [group.items])
+
+  // Flatten rows for virtualization (headers + items)
+  const flattenedRows = useMemo(() => {
+    const rows = []
+    Object.entries(itemsByFile).forEach(([filename, items]) => {
+      // Add file header
+      rows.push({
+        type: 'header',
+        filename,
+        count: items.length,
+        color: getFileColor(filename)
+      })
+      // Add items
+      items.forEach(item => {
+        rows.push({
+          type: 'item',
+          item
+        })
+      })
+    })
+    return rows
+  }, [itemsByFile])
+
+  // Calculate row height based on content
+  const getRowHeight = (index) => {
+    const row = flattenedRows[index]
+    if (row.type === 'header') {
+      return 40 // Header height
+    }
+
+    // Estimate item height based on data fields and links
+    const item = row.item
+    const dataFieldCount = Object.keys(item.data).filter(key =>
+      !key.toLowerCase().includes('link') &&
+      !key.toLowerCase().includes('_id') &&
+      key !== item.id
+    ).length
+
+    const hasLinks = item.in_links.length > 0 || item.out_links.length > 0
+    const linkLines = (item.in_links.length > 0 ? 1 : 0) + (item.out_links.length > 0 ? 1 : 0)
+
+    // Base height + data fields + links + padding
+    return 70 + (dataFieldCount * 24) + (hasLinks ? linkLines * 20 : 0) + 16
+  }
 
   // Handle item selection
   const toggleItemSelection = (itemId) => {
@@ -147,16 +333,6 @@ const GroupCard = ({ group }) => {
       setCreatingManualItem(false)
     }
   }
-
-  // Group items by source file
-  const itemsByFile = group.items.reduce((acc, item) => {
-    const file = item.source_file
-    if (!acc[file]) {
-      acc[file] = []
-    }
-    acc[file].push(item)
-    return acc
-  }, {})
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -324,120 +500,24 @@ const GroupCard = ({ group }) => {
             )}
           </div>
 
-          <div className="space-y-4">
-            {Object.entries(itemsByFile).map(([filename, items]) => (
-              <div key={filename}>
-                <div className={`px-3 py-1 rounded-md inline-block mb-2 text-xs font-medium ${getFileColor(filename)}`}>
-                  {filename} ({items.length})
-                </div>
-
-                <div className="space-y-2">
-                  {items.map((item) => {
-                    const isSelected = selectedItems.has(item.id)
-                    return (
-                      <div
-                        key={item.id}
-                        className={`p-3 border rounded-lg transition-colors ${
-                          isSelected ? 'border-primary bg-primary/5' : 'hover:bg-accent'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            {/* Checkbox */}
-                            <button
-                              onClick={() => toggleItemSelection(item.id)}
-                              className="mt-0.5 flex-shrink-0"
-                              title={isSelected ? 'Seçimi kaldır' : 'Seç'}
-                            >
-                              {isSelected ? (
-                                <CheckSquare className="h-5 w-5 text-primary" />
-                              ) : (
-                                <Square className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
-                              )}
-                            </button>
-
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <span className="font-mono text-sm font-medium">{item.id}</span>
-                            {item.source_type === 'manual' && (
-                              <Badge variant="default" className="text-xs bg-purple-500 hover:bg-purple-600">
-                                MANUEL
-                              </Badge>
-                            )}
-                            {item.in_links.length > 0 && (
-                              <Badge variant="outline" className="text-xs">
-                                ← {item.in_links.length}
-                              </Badge>
-                            )}
-                            {item.out_links.length > 0 && (
-                              <Badge variant="outline" className="text-xs">
-                                → {item.out_links.length}
-                              </Badge>
-                            )}
-                          </div>
-
-                          {/* Display item data */}
-                          <div className="text-sm text-muted-foreground space-y-1">
-                            {Object.entries(item.data).map(([key, value]) => {
-                              // Skip link columns and ID column (already shown)
-                              if (
-                                key.toLowerCase().includes('link') ||
-                                key.toLowerCase().includes('_id') ||
-                                key === item.id
-                              ) {
-                                return null
-                              }
-
-                              return (
-                                <div key={key} className="flex">
-                                  <span className="font-medium w-32 flex-shrink-0">{key}:</span>
-                                  <span className="flex-1">{value || 'N/A'}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-
-                          {/* Links */}
-                          {(item.in_links.length > 0 || item.out_links.length > 0) && (
-                            <div className="mt-2 text-xs space-y-1">
-                              {item.in_links.length > 0 && (
-                                <div>
-                                  <span className="font-medium">In Links: </span>
-                                  <span className="text-muted-foreground">
-                                    {item.in_links.join(', ')}
-                                  </span>
-                                </div>
-                              )}
-                              {item.out_links.length > 0 && (
-                                <div>
-                                  <span className="font-medium">Out Links: </span>
-                                  <span className="text-muted-foreground">
-                                    {item.out_links.join(', ')}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                            </div>
-                          </div>
-
-                          {/* Remove Button */}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleRemoveItem(item.id)}
-                            disabled={removing}
-                            title="Gruptan çıkar"
-                          >
-                            <X className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+          {/* Virtualized Items List */}
+          <div className="border rounded-lg overflow-hidden">
+            <List
+              ref={listRef}
+              height={Math.min(600, flattenedRows.length * 100)} // Max 600px height
+              itemCount={flattenedRows.length}
+              itemSize={getRowHeight}
+              width="100%"
+              itemData={{
+                flattenedRows,
+                selectedItems,
+                toggleItemSelection,
+                handleRemoveItem,
+                removing
+              }}
+            >
+              {VirtualizedRow}
+            </List>
           </div>
         </CardContent>
       )}
