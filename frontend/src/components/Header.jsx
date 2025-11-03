@@ -20,7 +20,7 @@ const Header = () => {
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
             <img
-              src="/aselsan_Logo.gif"
+              src="/aselsan_logo.png"
               alt="ASELSAN Logo"
               className="h-10 object-contain"
             />

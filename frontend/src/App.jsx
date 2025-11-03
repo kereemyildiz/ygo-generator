@@ -39,7 +39,7 @@ const AppContent = () => {
           <div className="flex flex-col items-center gap-4">
             {/* Logo */}
             <img
-              src="/aselsan_Logo.gif"
+              src="/aselsan_logo.png"
               alt="ASELSAN Logo"
               className="h-8 object-contain opacity-80"
             />
