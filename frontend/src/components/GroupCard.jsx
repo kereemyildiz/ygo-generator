@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, FilePlus } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, FilePlus, Sparkles } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
@@ -205,6 +205,16 @@ const GroupCard = ({ group }) => {
             >
               <FilePlus className="h-4 w-4 mr-1" />
               Manuel Madde
+            </Button>
+
+            {/* Generate SRS Button - AI Feature (Demo) */}
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all"
+              title="Yapay zeka ile YGÖ maddesi üret"
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              YGÖ Maddesi Üret
             </Button>
 
             {/* Export Buttons */}
