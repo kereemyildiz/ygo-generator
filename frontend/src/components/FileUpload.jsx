@@ -64,7 +64,7 @@ const FileUpload = () => {
 
   // Handle delete uploaded file
   const handleDeleteFile = async (filename) => {
-    if (!window.confirm(`Delete "${filename}"?`)) return
+    if (!window.confirm(`"${filename}" dosyasını silmek istediğinizden emin misiniz?`)) return
 
     try {
       setDeleting(filename)
@@ -106,9 +106,9 @@ const FileUpload = () => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Upload Excel Files</CardTitle>
+        <CardTitle>Excel Dosyalarını Yükle</CardTitle>
         <CardDescription>
-          Upload one or more Excel files (.xlsx, .xls) containing requirements, use cases, or test scenarios
+          Gereksinimler, kullanım senaryoları veya test senaryoları içeren bir veya daha fazla Excel dosyası (.xlsx, .xls) yükleyin
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -134,14 +134,14 @@ const FileUpload = () => {
           <input {...getInputProps()} />
           <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           {isDragActive ? (
-            <p className="text-primary font-medium">Drop files here...</p>
+            <p className="text-primary font-medium">Dosyaları buraya bırakın...</p>
           ) : (
             <div>
               <p className="text-lg font-medium mb-2">
-                Drag & drop Excel files here
+                Excel dosyalarını buraya sürükleyip bırakın
               </p>
               <p className="text-sm text-muted-foreground">
-                or click to browse files
+                veya göz atmak için tıklayın
               </p>
             </div>
           )}
@@ -150,7 +150,7 @@ const FileUpload = () => {
         {/* Selected Files */}
         {selectedFiles.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium mb-2">Selected Files ({selectedFiles.length})</h4>
+            <h4 className="text-sm font-medium mb-2">Seçili Dosyalar ({selectedFiles.length})</h4>
             <div className="space-y-2">
               {selectedFiles.map((file, index) => (
                 <div
@@ -182,12 +182,12 @@ const FileUpload = () => {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
+                  Yükleniyor...
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload {selectedFiles.length} File{selectedFiles.length > 1 ? 's' : ''}
+                  {selectedFiles.length} Dosya Yükle
                 </>
               )}
             </Button>
@@ -199,7 +199,7 @@ const FileUpload = () => {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">
-                Uploaded Files ({uploadedFiles.length})
+                Yüklenen Dosyalar ({uploadedFiles.length})
               </h4>
               <div className="flex items-center gap-2">
                 <Button
@@ -211,12 +211,12 @@ const FileUpload = () => {
                   {deleting === 'all' ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Clearing...
+                      Temizleniyor...
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Clear All
+                      Tümünü Temizle
                     </>
                   )}
                 </Button>
@@ -228,12 +228,12 @@ const FileUpload = () => {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Analyzing...
+                      Analiz ediliyor...
                     </>
                   ) : (
                     <>
                       <RefreshCw className="h-4 w-4 mr-2" />
-                      Analyze Links
+                      Bağlantıları Analiz Et
                     </>
                   )}
                 </Button>
@@ -254,7 +254,7 @@ const FileUpload = () => {
                     variant="ghost"
                     onClick={() => handleDeleteFile(filename)}
                     disabled={deleting === filename}
-                    title="Delete file"
+                    title="Dosyayı sil"
                   >
                     {deleting === filename ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -271,7 +271,7 @@ const FileUpload = () => {
         {/* No files message */}
         {uploadedFiles.length === 0 && selectedFiles.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No files uploaded yet. Upload Excel files to begin.
+            Henüz dosya yüklenmedi. Başlamak için Excel dosyaları yükleyin.
           </p>
         )}
       </CardContent>

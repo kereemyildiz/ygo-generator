@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { X, Search, Filter, FileX, Database, Loader2, FolderPlus, UserPlus, Columns } from 'lucide-react';
+import { X, Search, Filter, FileX, Database, Loader2, FolderPlus, ListPlus, Columns } from 'lucide-react';
 import VirtualizedTable from './VirtualizedTable';
 import Modal from './ui/Modal';
 import * as api from '../lib/api';
@@ -214,14 +214,14 @@ export default function FileViewer({ filename, onClose }) {
             <div>
               <h2 className="text-xl font-bold">{filename}</h2>
               <p className="text-sm text-muted-foreground">
-                {data ? `${data.total.toLocaleString()} items total` : 'Loading...'}
+                {data ? `Toplam ${data.total.toLocaleString()} madde` : 'Yükleniyor...'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
-            title="Close (Esc)"
+            title="Kapat (Esc)"
           >
             <X className="h-5 w-5" />
           </button>
@@ -235,7 +235,7 @@ export default function FileViewer({ filename, onClose }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search in all columns..."
+                placeholder="Tüm sütunlarda ara..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
@@ -296,13 +296,13 @@ export default function FileViewer({ filename, onClose }) {
             >
               <FileX className="h-4 w-4" />
               <span className="whitespace-nowrap">
-                {filterOrphaned ? 'Showing Orphaned' : 'Show Orphaned'}
+                {filterOrphaned ? 'Yetimler Gösteriliyor' : 'Yetimleri Göster'}
               </span>
             </button>
 
             {/* Results Count */}
             <div className="text-sm text-muted-foreground whitespace-nowrap">
-              {filteredItems.length.toLocaleString()} of {data?.total.toLocaleString()} items
+              {data?.total.toLocaleString()} maddeden {filteredItems.length.toLocaleString()}
             </div>
 
             {/* Group Actions */}
@@ -312,7 +312,7 @@ export default function FileViewer({ filename, onClose }) {
                   onClick={() => setShowGroupMenu(!showGroupMenu)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  <UserPlus className="h-4 w-4" />
+                  <ListPlus className="h-4 w-4" />
                   <span className="whitespace-nowrap">
                     Gruba Ekle ({selectedItems.size})
                   </span>
@@ -372,7 +372,7 @@ export default function FileViewer({ filename, onClose }) {
                                   {group.group_name}
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-0.5">
-                                  {group.item_count} öğe
+                                  {group.item_count} madde
                                 </div>
                               </button>
                             ))}
@@ -394,9 +394,9 @@ export default function FileViewer({ filename, onClose }) {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading file data...</p>
+                <p className="text-muted-foreground">Dosya verileri yükleniyor...</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  This may take a moment for large files
+                  Büyük dosyalar için bu biraz zaman alabilir
                 </p>
               </div>
             </div>
@@ -407,13 +407,13 @@ export default function FileViewer({ filename, onClose }) {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <X className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <p className="text-destructive font-medium">Failed to load file</p>
+                <p className="text-destructive font-medium">Dosya yüklenemedi</p>
                 <p className="text-sm text-muted-foreground mt-2">{error}</p>
                 <button
                   onClick={onClose}
                   className="mt-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Close
+                  Kapat
                 </button>
               </div>
             </div>
@@ -440,9 +440,9 @@ export default function FileViewer({ filename, onClose }) {
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No items match your filters</p>
+                    <p className="text-muted-foreground">Filtrelerinize uygun öğe yok</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Try adjusting your search or filter settings
+                      Arama veya filtre ayarlarınızı değiştirmeyi deneyin
                     </p>
                   </div>
                 </div>
@@ -457,7 +457,7 @@ export default function FileViewer({ filename, onClose }) {
         <Modal
           isOpen={true}
           onClose={() => setDetailItem(null)}
-          title={`Öğe Detayları: ${detailItem.id}`}
+          title={`madde Detayları: ${detailItem.id}`}
           size="lg"
         >
           <div className="space-y-4">

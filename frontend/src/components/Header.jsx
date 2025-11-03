@@ -40,7 +40,7 @@ const Header = () => {
                 <div className="h-8 w-px bg-border" />
                 <div className="text-center">
                   <div className="text-lg font-bold text-foreground">{statistics.total_items}</div>
-                  <div className="text-xs text-muted-foreground">Öğe</div>
+                  <div className="text-xs text-muted-foreground">madde</div>
                 </div>
                 {statistics.total_groups > 0 && (
                   <>

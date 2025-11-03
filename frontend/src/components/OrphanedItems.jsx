@@ -14,7 +14,7 @@ import { ContextMenu, ContextMenuItem, ContextMenuSub } from './ui/ContextMenu'
 import { getFileColor } from '../lib/utils'
 import {
   Package,
-  Plus,
+  ListPlus,
   FolderPlus,
   CheckSquare,
   Square,
@@ -109,10 +109,10 @@ const OrphanedItems = () => {
             <div>
               <CardTitle className="flex items-center">
                 <Package className="h-5 w-5 mr-2" />
-                Orphaned Items
+                Linklenmeyen Maddeler
               </CardTitle>
               <CardDescription>
-                Items without any link relationships ({orphanedItems.length})
+                Bağlantısı olmayan maddeler ({orphanedItems.length})
               </CardDescription>
             </div>
 
@@ -127,12 +127,12 @@ const OrphanedItems = () => {
                   {selectedItems.length === orphanedItems.length ? (
                     <>
                       <CheckSquare className="h-4 w-4 mr-2" />
-                      Deselect All
+                      Seçimi Kaldır
                     </>
                   ) : (
                     <>
                       <Square className="h-4 w-4 mr-2" />
-                      Select All
+                      Tümünü Seç
                     </>
                   )}
                 </Button>
@@ -140,7 +140,7 @@ const OrphanedItems = () => {
                 {selectedItems.length > 0 && (
                   <>
                     <Badge variant="secondary">
-                      {selectedItems.length} selected
+                      {selectedItems.length} seçili
                     </Badge>
 
                     <Button
@@ -149,7 +149,7 @@ const OrphanedItems = () => {
                       disabled={loading}
                     >
                       <FolderPlus className="h-4 w-4 mr-2" />
-                      Create New Group
+                      Yeni Grup Oluştur
                     </Button>
 
                     {groups.length > 0 && (
@@ -159,8 +159,8 @@ const OrphanedItems = () => {
                           variant="outline"
                           disabled={loading}
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add to Group
+                          <ListPlus className="h-4 w-4 mr-2" />
+                          Gruba Ekle
                         </Button>
                         <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-popover border hidden group-hover:block z-10">
                           <div className="p-1">
@@ -188,7 +188,7 @@ const OrphanedItems = () => {
           {loading && orphanedItems.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              Loading orphaned items...
+              Linklenmeyen Maddeler yükleniyor...
             </div>
           ) : (
             <div className="space-y-2">
@@ -211,42 +211,42 @@ const OrphanedItems = () => {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent onClose={() => setShowCreateDialog(false)}>
           <DialogHeader>
-            <DialogTitle>Create New Group from Selected Items</DialogTitle>
+            <DialogTitle>Seçili maddelerden Yeni Grup Oluştur</DialogTitle>
           </DialogHeader>
 
           <div className="py-4">
             <label className="text-sm font-medium mb-2 block">
-              Group Name
+              Grup Adı
             </label>
             <input
               type="text"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="Enter group name..."
+              placeholder="Grup adını girin..."
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreateGroup()
               }}
             />
             <p className="text-sm text-muted-foreground mt-2">
-              Creating group with {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''}
+              {selectedItems.length} madde ile grup oluşturuluyor
             </p>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Cancel
+              İptal
             </Button>
             <Button onClick={handleCreateGroup} disabled={!newGroupName.trim() || loading}>
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  Oluşturuluyor...
                 </>
               ) : (
                 <>
                   <FolderPlus className="h-4 w-4 mr-2" />
-                  Create Group
+                  Grup Oluştur
                 </>
               )}
             </Button>
@@ -309,7 +309,7 @@ const OrphanedItem = ({ item, groups, isSelected, onToggleSelection, onAddToGrou
       }
     >
       {groups.length > 0 && (
-        <ContextMenuSub label="Add to Group" icon={Plus}>
+        <ContextMenuSub label="Gruba Ekle" icon={ListPlus}>
           {groups.map(group => (
             <ContextMenuItem
               key={group.group_id}

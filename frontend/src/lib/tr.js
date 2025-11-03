@@ -34,7 +34,7 @@ export const tr = {
     none: 'Hiçbiri',
     showing: 'Gösteriliyor',
     of: '/',
-    items: 'öğe',
+    items: 'madde',
     files: 'dosya',
     groups: 'grup',
     rows: 'satır',
@@ -44,9 +44,9 @@ export const tr = {
   header: {
     title: 'ASEL Trace',
     uploadedFiles: 'Yüklenen Dosyalar',
-    totalItems: 'Toplam Öğe',
+    totalItems: 'Toplam madde',
     linkedGroups: 'Bağlantılı Gruplar',
-    orphanedItems: 'Bağımsız Öğeler',
+    orphanedItems: 'Bağımsız maddeler',
     darkMode: 'Karanlık Mod',
     lightMode: 'Aydınlık Mod',
   },
@@ -77,7 +77,7 @@ export const tr = {
     title: 'Dosya Gezgini',
     description: 'Yüklenen dosyaları görüntüle ve keşfet',
     totalRows: 'Toplam Satır',
-    orphanedItems: 'Bağımsız Öğeler',
+    orphanedItems: 'Bağımsız maddeler',
     columns: 'Sütunlar',
     excelFile: 'Excel Dosyası',
     view: 'Görüntüle',
@@ -100,14 +100,14 @@ export const tr = {
     addToExistingGroup: 'Mevcut Gruba Ekle',
     groupNamePlaceholder: 'Grup adı...',
     noGroupsAvailable: 'Kullanılabilir grup yok',
-    noItemsMatch: 'Hiçbir öğe filtreyle eşleşmiyor',
+    noItemsMatch: 'Hiçbir madde filtreyle eşleşmiyor',
     adjustFilters: 'Arama veya filtre ayarlarınızı düzenlemeyi deneyin',
     closeShortcut: 'Kapat (Esc)',
   },
 
   // VirtualizedTable
   table: {
-    noItems: 'Görüntülenecek öğe yok',
+    noItems: 'Görüntülenecek madde yok',
     noColumns: 'Sütun tanımlanmamış',
     showing: 'Gösteriliyor',
     selected: 'seçildi',
@@ -119,8 +119,8 @@ export const tr = {
     noGroups: 'Grup Bulunamadı',
     noGroupsDescription: 'Bağlantı ilişkilerine göre grup oluşturmak için Excel dosyalarını yükleyin ve "Bağlantıları Analiz Et" düğmesine tıklayın',
     loading: 'Gruplar yükleniyor...',
-    deleteConfirm: 'öğesini silmek istediğinizden emin misiniz?',
-    removeItemConfirm: 'Bu öğeyi gruptan kaldırmak istediğinizden emin misiniz?',
+    deleteConfirm: 'maddesini silmek istediğinizden emin misiniz?',
+    removeItemConfirm: 'Bu maddeyi gruptan kaldırmak istediğinizden emin misiniz?',
     exportJSON: 'JSON Olarak Dışa Aktar',
     exportExcel: 'Excel Olarak Dışa Aktar',
     expand: 'Genişlet',
@@ -133,14 +133,14 @@ export const tr = {
 
   // Orphaned Items
   orphaned: {
-    title: 'Bağımsız Öğeler',
-    description: 'Herhangi bir bağlantıya sahip olmayan öğeler',
-    noItems: 'Bağımsız Öğe Yok',
-    noItemsDescription: 'Tüm öğeler en az bir bağlantıya sahip',
-    loading: 'Bağımsız öğeler yükleniyor...',
+    title: 'Bağımsız maddeler',
+    description: 'Herhangi bir bağlantıya sahip olmayan maddeler',
+    noItems: 'Bağımsız madde Yok',
+    noItemsDescription: 'Tüm maddeler en az bir bağlantıya sahip',
+    loading: 'Bağımsız maddeler yükleniyor...',
     selectAll: 'Tümünü Seç',
     deselectAll: 'Seçimi Kaldır',
-    selectedCount: 'öğe seçildi',
+    selectedCount: 'madde seçildi',
     addToGroup: 'Gruba Ekle',
     createGroup: 'Grup Oluştur',
     bulkActions: 'Toplu İşlemler',
@@ -157,10 +157,10 @@ export const tr = {
   // Statistics
   stats: {
     totalFiles: 'Toplam Dosya',
-    totalItems: 'Toplam Öğe',
+    totalItems: 'Toplam madde',
     totalGroups: 'Toplam Grup',
-    orphanedItems: 'Bağımsız Öğeler',
-    linkedItems: 'Bağlantılı Öğeler',
+    orphanedItems: 'Bağımsız maddeler',
+    linkedItems: 'Bağlantılı maddeler',
   },
 
   // Footer
@@ -191,8 +191,8 @@ export const tr = {
     groupCreated: 'Grup başarıyla oluşturuldu',
     groupUpdated: 'Grup başarıyla güncellendi',
     groupDeleted: 'Grup başarıyla silindi',
-    itemAdded: 'Öğe gruba eklendi',
-    itemRemoved: 'Öğe gruptan kaldırıldı',
+    itemAdded: 'madde gruba eklendi',
+    itemRemoved: 'madde gruptan kaldırıldı',
     fileDeleted: 'Dosya başarıyla silindi',
   },
 };

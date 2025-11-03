@@ -224,7 +224,7 @@ export default function VirtualizedTable({
   if (!items.length) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
-        No items to display
+        Gösterilecek madde yok
       </div>
     );
   }
@@ -232,7 +232,7 @@ export default function VirtualizedTable({
   if (!columns.length) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
-        No columns defined
+        Sütun tanımlanmadı
       </div>
     );
   }
@@ -259,10 +259,10 @@ export default function VirtualizedTable({
 
       {/* Footer with row count */}
       <div className="border-t bg-muted/30 px-4 py-2 text-sm text-muted-foreground">
-        Showing {items.length.toLocaleString()} row{items.length !== 1 ? 's' : ''}
+        {items.length.toLocaleString()} satır gösteriliyor
         {selectable && selectedItems.size > 0 && (
           <span className="ml-2 text-primary font-medium">
-            ({selectedItems.size} selected)
+            ({selectedItems.size} seçili)
           </span>
         )}
       </div>

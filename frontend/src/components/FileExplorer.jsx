@@ -34,7 +34,7 @@ const FileCard = ({ filename, stats, onView }) => {
               {filename}
             </h3>
             <p className="text-sm text-muted-foreground">
-              Excel File
+              Excel Dosyası
             </p>
           </div>
         </div>
@@ -46,7 +46,7 @@ const FileCard = ({ filename, stats, onView }) => {
           }}
         >
           <Eye className="h-4 w-4" />
-          View
+          Görüntüle
         </button>
       </div>
 
@@ -55,7 +55,7 @@ const FileCard = ({ filename, stats, onView }) => {
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground flex items-center gap-2">
             <Database className="h-4 w-4" />
-            Total Rows
+            Toplam Satır
           </span>
           <span className="font-medium">{stats.total_rows.toLocaleString()}</span>
         </div>
@@ -63,7 +63,7 @@ const FileCard = ({ filename, stats, onView }) => {
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground flex items-center gap-2">
             <FileX className="h-4 w-4" />
-            Orphaned Items
+            Linklenmeyen Maddeler
           </span>
           <div className="flex items-center gap-2">
             <span className="font-medium">{stats.orphaned_count.toLocaleString()}</span>
@@ -76,7 +76,7 @@ const FileCard = ({ filename, stats, onView }) => {
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Columns</span>
+          <span className="text-muted-foreground">Sütunlar</span>
           <span className="font-medium">{stats.columns.length}</span>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function FileExplorer() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading file statistics...</p>
+          <p className="text-muted-foreground">Dosya istatistikleri yükleniyor...</p>
         </div>
       </div>
     );
@@ -174,7 +174,7 @@ export default function FileExplorer() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-destructive">Failed to load file statistics</p>
+          <p className="text-destructive">Dosya istatistikleri yüklenemedi</p>
           <p className="text-sm text-muted-foreground mt-2">{error}</p>
         </div>
       </div>
@@ -187,9 +187,9 @@ export default function FileExplorer() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No files uploaded yet</p>
+          <p className="text-muted-foreground">Henüz dosya yüklenmedi</p>
           <p className="text-sm text-muted-foreground mt-2">
-            Upload Excel files to get started
+            Başlamak için Excel dosyaları yükleyin
           </p>
         </div>
       </div>
@@ -202,13 +202,13 @@ export default function FileExplorer() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">File Explorer</h2>
+            <h2 className="text-2xl font-bold">Dosya Gezgini</h2>
             <p className="text-muted-foreground">
-              View and explore uploaded files
+              Yüklenen dosyaları görüntüleyin ve keşfedin
             </p>
           </div>
           <div className="text-sm text-muted-foreground">
-            {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''}
+            {uploadedFiles.length} dosya
           </div>
         </div>
 
@@ -234,7 +234,7 @@ export default function FileExplorer() {
                   <div>
                     <h3 className="font-medium text-muted-foreground">{filename}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Failed to load stats
+                      İstatistikler yüklenemedi
                     </p>
                   </div>
                 </div>

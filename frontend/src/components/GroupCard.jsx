@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, UserPlus } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, Download, X, Edit2, Check, XCircle, FilePlus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
@@ -28,7 +28,7 @@ const GroupCard = ({ group }) => {
 
   // Handle group deletion
   const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete ${group.group_name}?`)) {
+    if (window.confirm(`${group.group_name} grubunu silmek istediğinizden emin misiniz?`)) {
       try {
         await deleteGroup(group.group_id)
       } catch (err) {
@@ -39,7 +39,7 @@ const GroupCard = ({ group }) => {
 
   // Handle item removal
   const handleRemoveItem = async (itemId) => {
-    if (window.confirm('Are you sure you want to remove this item from the group?')) {
+    if (window.confirm('Bu maddeyi gruptan çıkarmak istediğinizden emin misiniz?')) {
       try {
         setRemoving(true)
         await removeItemFromGroup(group.group_id, itemId)
@@ -94,14 +94,14 @@ const GroupCard = ({ group }) => {
     try {
       setCreatingManualItem(true)
       await createManualItem(group.group_id, manualItemTitle, manualItemDescription)
-      toast.success('Manuel öğe başarıyla eklendi')
+      toast.success('Manuel Madde başarıyla eklendi')
       setManualItemTitle('')
       setManualItemDescription('')
       setShowManualItemModal(false)
       await fetchGroups()
     } catch (err) {
       console.error('Failed to create manual item:', err)
-      toast.error('Manuel öğe eklenemedi')
+      toast.error('Manuel Madde eklenemedi')
     } finally {
       setCreatingManualItem(false)
     }
@@ -160,7 +160,7 @@ const GroupCard = ({ group }) => {
                   variant="ghost"
                   onClick={() => setIsEditingName(true)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Edit name"
+                  title="İsmi düzenle"
                 >
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -168,10 +168,10 @@ const GroupCard = ({ group }) => {
             )}
             <div className="flex items-center space-x-2 mt-2">
               <Badge variant="secondary">
-                {group.item_count} item{group.item_count !== 1 ? 's' : ''}
+                {group.item_count} madde
               </Badge>
               <Badge variant="outline">
-                {Object.keys(itemsByFile).length} file{Object.keys(itemsByFile).length !== 1 ? 's' : ''}
+                {Object.keys(itemsByFile).length} dosya
               </Badge>
             </div>
           </div>
@@ -183,10 +183,10 @@ const GroupCard = ({ group }) => {
               size="sm"
               variant="outline"
               onClick={() => setShowManualItemModal(true)}
-              title="Manuel öğe ekle"
+              title="Manuel Madde ekle"
             >
-              <UserPlus className="h-4 w-4 mr-1" />
-              Manuel Öğe
+              <FilePlus className="h-4 w-4 mr-1" />
+              Manuel Madde
             </Button>
 
             {/* Export Buttons */}
@@ -195,7 +195,7 @@ const GroupCard = ({ group }) => {
               download
               className="inline-flex"
             >
-              <Button size="sm" variant="outline" title="Export as JSON">
+              <Button size="sm" variant="outline" title="JSON olarak dışa aktar">
                 <Download className="h-4 w-4 mr-1" />
                 JSON
               </Button>
@@ -205,7 +205,7 @@ const GroupCard = ({ group }) => {
               download
               className="inline-flex"
             >
-              <Button size="sm" variant="outline" title="Export as Excel">
+              <Button size="sm" variant="outline" title="Excel olarak dışa aktar">
                 <Download className="h-4 w-4 mr-1" />
                 Excel
               </Button>
@@ -216,7 +216,7 @@ const GroupCard = ({ group }) => {
               size="sm"
               variant="destructive"
               onClick={handleDelete}
-              title="Delete Group"
+              title="Grubu sil"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -324,7 +324,7 @@ const GroupCard = ({ group }) => {
                           variant="ghost"
                           onClick={() => handleRemoveItem(item.id)}
                           disabled={removing}
-                          title="Remove from group"
+                          title="Gruptan çıkar"
                         >
                           <X className="h-4 w-4 text-destructive" />
                         </Button>
@@ -342,7 +342,7 @@ const GroupCard = ({ group }) => {
       <Modal
         isOpen={showManualItemModal}
         onClose={() => setShowManualItemModal(false)}
-        title="Manuel Öğe Ekle"
+        title="Manuel Madde Ekle"
         size="md"
         footer={
           <>
@@ -368,7 +368,7 @@ const GroupCard = ({ group }) => {
               type="text"
               value={manualItemTitle}
               onChange={(e) => setManualItemTitle(e.target.value)}
-              placeholder="Öğe başlığını girin..."
+              placeholder="madde başlığını girin..."
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background"
               autoFocus
             />
@@ -389,7 +389,7 @@ const GroupCard = ({ group }) => {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Manuel öğeler otomatik ID ile oluşturulur ve gruba eklenir.
+            Manuel Maddeler otomatik ID ile oluşturulur ve gruba eklenir.
           </p>
         </div>
       </Modal>
