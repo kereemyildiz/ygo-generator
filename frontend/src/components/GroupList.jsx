@@ -10,7 +10,7 @@ import GroupCard from './GroupCard'
 import { Alert, AlertDescription, AlertTitle } from './ui/Alert'
 
 const GroupList = () => {
-  const { groups, fetchGroups, fetchStatistics, loading } = useApp()
+  const { groups, fetchGroups, fetchStatistics, loadingGroups } = useApp()
 
   // Fetch groups on mount
   useEffect(() => {
@@ -19,7 +19,7 @@ const GroupList = () => {
   }, [fetchGroups, fetchStatistics])
 
   // Loading state
-  if (loading && groups.length === 0) {
+  if (loadingGroups && groups.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

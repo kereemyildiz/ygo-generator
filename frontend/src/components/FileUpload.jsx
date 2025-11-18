@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from './ui/Alert'
 import { Badge } from './ui/Badge'
 
 const FileUpload = () => {
-  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, deleteFile, clearAllGroups, loading, error } = useApp()
+  const { uploadedFiles, fetchUploadedFiles, uploadFiles, analyzeFiles, deleteFile, clearAllGroups, loadingFiles, loadingAnalysis, error } = useApp()
   const { confirm } = useConfirm()
   const [selectedFiles, setSelectedFiles] = useState([])
   const [deleting, setDeleting] = useState(null)
@@ -199,10 +199,10 @@ const FileUpload = () => {
             </div>
             <Button
               onClick={handleUpload}
-              disabled={loading}
+              disabled={loadingFiles}
               className="w-full mt-4"
             >
-              {loading ? (
+              {loadingFiles ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Yükleniyor...
@@ -227,7 +227,7 @@ const FileUpload = () => {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleClearAll}
-                  disabled={loading || deleting === 'all'}
+                  disabled={loadingFiles || deleting === 'all'}
                   size="sm"
                   variant="destructive"
                 >
@@ -245,10 +245,10 @@ const FileUpload = () => {
                 </Button>
                 <Button
                   onClick={handleAnalyze}
-                  disabled={loading}
+                  disabled={loadingAnalysis}
                   size="sm"
                 >
-                  {loading ? (
+                  {loadingAnalysis ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Analiz ediliyor...

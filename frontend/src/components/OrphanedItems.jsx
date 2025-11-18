@@ -28,7 +28,7 @@ const OrphanedItems = () => {
     fetchOrphanedItems,
     addOrphanedToGroup,
     createGroupFromOrphaned,
-    loading
+    loadingOrphaned
   } = useApp()
 
   const [selectedItems, setSelectedItems] = useState([])
@@ -97,7 +97,7 @@ const OrphanedItems = () => {
   }
 
   // Empty state
-  if (!loading && orphanedItems.length === 0) {
+  if (!loadingOrphaned && orphanedItems.length === 0) {
     return null  // Don't show section if no orphaned items
   }
 
@@ -146,7 +146,7 @@ const OrphanedItems = () => {
                     <Button
                       size="sm"
                       onClick={() => setShowCreateDialog(true)}
-                      disabled={loading}
+                      disabled={loadingOrphaned}
                     >
                       <FolderPlus className="h-4 w-4 mr-2" />
                       Yeni Grup Oluştur
@@ -157,7 +157,7 @@ const OrphanedItems = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={loading}
+                          disabled={loadingOrphaned}
                         >
                           <ListPlus className="h-4 w-4 mr-2" />
                           Gruba Ekle
@@ -185,7 +185,7 @@ const OrphanedItems = () => {
         </CardHeader>
 
         <CardContent>
-          {loading && orphanedItems.length === 0 ? (
+          {loadingOrphaned && orphanedItems.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
               Linklenmeyen Maddeler yükleniyor...
@@ -237,8 +237,8 @@ const OrphanedItems = () => {
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               İptal
             </Button>
-            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim() || loading}>
-              {loading ? (
+            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim() || loadingOrphaned}>
+              {loadingOrphaned ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Oluşturuluyor...
