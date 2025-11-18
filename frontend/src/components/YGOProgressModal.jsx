@@ -22,18 +22,43 @@ const YGOProgressModal = ({ isOpen, jobId, onComplete, onError }) => {
         const jobData = await getYGOJobStatus(jobId)
         setJob(jobData)
 
+        console.log('📊 YGÖ Job Status Update:', {
+          jobId,
+          status: jobData.status,
+          progress: jobData.progress,
+          processedItems: jobData.processed_items,
+          totalItems: jobData.total_items,
+          description: jobData.description,
+          timestamp: new Date().toISOString()
+        })
+
         // Check if job is complete or failed
         if (jobData.status === 'completed') {
           clearInterval(intervalId)
+          console.log('✅ YGÖ Generation Completed:', {
+            jobId,
+            result: jobData.result,
+            timestamp: new Date().toISOString()
+          })
           setTimeout(() => {
             if (onComplete) onComplete(jobData.result)
           }, 500)
         } else if (jobData.status === 'failed') {
           clearInterval(intervalId)
+          console.error('❌ YGÖ Generation Failed:', {
+            jobId,
+            error: jobData.error,
+            timestamp: new Date().toISOString()
+          })
           setError(jobData.error)
           if (onError) onError(jobData.error)
         }
       } catch (err) {
+        console.error('❌ YGÖ Job Status Check Failed:', {
+          jobId,
+          error: err.message,
+          timestamp: new Date().toISOString()
+        })
         setError(err.message)
         clearInterval(intervalId)
         if (onError) onError(err.message)

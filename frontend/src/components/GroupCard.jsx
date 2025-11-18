@@ -343,11 +343,25 @@ const GroupCard = ({ group }) => {
   // Handle YGÖ generation
   const handleGenerateYGO = async () => {
     try {
-      // Get item IDs (selected or null for all)
+      // Get item IDs (selected or all)
       const itemIds = selectedItems.size > 0 ? Array.from(selectedItems) : null
+
+      console.log('🚀 YGÖ Generation Started:', {
+        groupId: group.group_id,
+        groupName: group.group_name,
+        selectedItemsCount: itemIds ? itemIds.length : group.items.length,
+        itemIds: itemIds,
+        timestamp: new Date().toISOString()
+      })
 
       // Start YGÖ generation
       const response = await generateYGO(group.group_id, itemIds)
+
+      console.log('✅ YGÖ Generation Request Accepted:', {
+        jobId: response.job_id,
+        message: response.message,
+        timestamp: new Date().toISOString()
+      })
 
       // Store job ID and show progress modal
       setYgoJobId(response.job_id)
@@ -355,7 +369,12 @@ const GroupCard = ({ group }) => {
 
       toast.success(response.message)
     } catch (err) {
-      console.error('Failed to generate YGÖ:', err)
+      console.error('❌ YGÖ Generation Failed:', {
+        error: err,
+        errorMessage: err.response?.data?.detail || err.message,
+        groupId: group.group_id,
+        timestamp: new Date().toISOString()
+      })
       toast.error(err.response?.data?.detail || 'YGÖ üretimi başlatılamadı')
     }
   }

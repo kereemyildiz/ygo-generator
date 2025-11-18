@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Loader2, FolderOpen, Sparkles, CheckSquare, Square } from 'lucide-react'
+import { Loader2, FolderOpen, Sparkles, CheckSquare, Square, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
 import GroupCard from './GroupCard'
@@ -60,14 +60,32 @@ const GroupList = () => {
 
     try {
       const groupIds = Array.from(selectedGroups)
+
+      console.log('🚀 Batch YGÖ Generation Started:', {
+        groupIds,
+        groupCount: groupIds.length,
+        timestamp: new Date().toISOString()
+      })
+
       const response = await generateYGOBatch(groupIds)
+
+      console.log('✅ Batch YGÖ Request Accepted:', {
+        jobId: response.job_id,
+        message: response.message,
+        timestamp: new Date().toISOString()
+      })
 
       setBatchJobId(response.job_id)
       setShowBatchProgress(true)
 
       toast.success(response.message)
     } catch (err) {
-      console.error('Failed to start batch YGÖ generation:', err)
+      console.error('❌ Batch YGÖ Generation Failed:', {
+        error: err,
+        errorMessage: err.response?.data?.detail || err.message,
+        groupIds: Array.from(selectedGroups),
+        timestamp: new Date().toISOString()
+      })
       toast.error(err.response?.data?.detail || 'Toplu YGÖ üretimi başlatılamadı')
     }
   }
@@ -118,51 +136,73 @@ const GroupList = () => {
 
   // Display groups
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold">
-            Gruplar ({groups.length})
-          </h2>
+        <h2 className="text-2xl font-bold">
+          Gruplar ({groups.length})
+        </h2>
 
-          {/* Batch Selection Toolbar */}
-          {selectedGroups.size > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-              <Badge variant="secondary" className="bg-primary/20">
-                {selectedGroups.size} grup seçildi
-              </Badge>
-              <Button
-                size="sm"
-                onClick={handleBatchGenerateYGO}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-              >
-                <Sparkles className="h-4 w-4 mr-1" />
-                Toplu YGÖ Üret
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Select All Button */}
+        {/* Select All Toggle */}
         <Button
           size="sm"
-          variant="outline"
+          variant={selectedGroups.size > 0 ? "default" : "outline"}
           onClick={selectAllGroups}
           className="gap-2"
         >
           {selectedGroups.size === groups.length ? (
             <>
               <CheckSquare className="h-4 w-4" />
-              Tümünü Kaldır
+              Seçimi Kaldır ({selectedGroups.size})
+            </>
+          ) : selectedGroups.size > 0 ? (
+            <>
+              <Square className="h-4 w-4" />
+              Tümünü Seç ({selectedGroups.size}/{groups.length})
             </>
           ) : (
             <>
               <Square className="h-4 w-4" />
-              Tümünü Seç
+              Toplu Seçim
             </>
           )}
         </Button>
       </div>
+
+      {/* Floating Batch Action Toolbar (appears when groups selected) */}
+      {selectedGroups.size > 0 && (
+        <div className="sticky top-4 z-20 mb-6">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-xl border-2 border-purple-400 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5" />
+                  <span className="font-semibold">
+                    {selectedGroups.size} grup seçildi
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedGroups(new Set())}
+                  className="text-white hover:bg-white/20 h-7 px-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Button
+                size="default"
+                onClick={handleBatchGenerateYGO}
+                className="bg-white text-purple-700 hover:bg-purple-50 font-semibold shadow-lg"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Toplu YGÖ Üret ({selectedGroups.size})
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Group Cards */}
       <div className="space-y-4">
