@@ -457,7 +457,7 @@ export default function FileViewer({ filename, onClose }) {
         <Modal
           isOpen={true}
           onClose={() => setDetailItem(null)}
-          title={`madde Detayları: ${detailItem.id}`}
+          title={`Madde Detayları: ${detailItem.id}`}
           size="lg"
         >
           <div className="space-y-4">

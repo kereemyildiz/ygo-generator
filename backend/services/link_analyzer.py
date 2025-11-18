@@ -108,7 +108,7 @@ class LinkAnalyzer:
             # Create group structure
             group = {
                 'group_id': f"GROUP-{idx + 1:03d}",
-                'group_name': f"Linked Group {idx + 1}",
+                'group_name': f"Linklenen Maddeler {idx + 1}",
                 'items': group_items,
                 'item_count': len(group_items),
                 'item_ids': list(component)

@@ -46,7 +46,7 @@ const GroupList = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">
-          Linked Groups ({groups.length})
+          Gruplar ({groups.length})
         </h2>
       </div>
 
