@@ -11,17 +11,12 @@ import GroupCard from './GroupCard'
 import { Alert, AlertDescription, AlertTitle } from './ui/Alert'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
-import { generateYGOBatch, getYGOJobStatus } from '../lib/api'
-import YGOProgressModal from './YGOProgressModal'
+import { generateYGOBatch } from '../lib/api'
 
 const GroupList = () => {
-  const { groups, fetchGroups, fetchStatistics, loadingGroups } = useApp()
+  const { groups, fetchGroups, fetchStatistics, loadingGroups, trackYGOJob } = useApp()
   const toast = useToast()
   const [selectedGroups, setSelectedGroups] = useState(new Set())
-  const [batchJobId, setBatchJobId] = useState(null)
-  const [showBatchProgress, setShowBatchProgress] = useState(false)
-  const [batchResults, setBatchResults] = useState(null)
-  const [showBatchResults, setShowBatchResults] = useState(false)
 
   // Fetch groups on mount
   useEffect(() => {
@@ -51,7 +46,7 @@ const GroupList = () => {
     }
   }
 
-  // Handle batch YGÖ generation
+  // Handle batch YGÖ generation (non-blocking)
   const handleBatchGenerateYGO = async () => {
     if (selectedGroups.size === 0) {
       toast.error('Lütfen en az bir grup seçin')
@@ -75,10 +70,20 @@ const GroupList = () => {
         timestamp: new Date().toISOString()
       })
 
-      setBatchJobId(response.job_id)
-      setShowBatchProgress(true)
+      // Track job in global state (non-blocking!)
+      trackYGOJob(response.job_id, {
+        groupIds: groupIds,
+        groupName: `Toplu YGÖ (${groupIds.length} grup)`,
+        itemCount: groupIds.length,
+        status: 'pending',
+        progress: 0,
+        isBatch: true
+      })
 
-      toast.success(response.message)
+      // Clear selection after starting
+      setSelectedGroups(new Set())
+
+      toast.success(`${response.message} - Arka planda çalışmaya devam edebilirsiniz`)
     } catch (err) {
       console.error('❌ Batch YGÖ Generation Failed:', {
         error: err,
@@ -88,27 +93,6 @@ const GroupList = () => {
       })
       toast.error(err.response?.data?.detail || 'Toplu YGÖ üretimi başlatılamadı')
     }
-  }
-
-  // Handle batch YGÖ generation complete
-  const handleBatchComplete = (result) => {
-    setShowBatchProgress(false)
-    setBatchResults(result)
-    setShowBatchResults(true)
-    setSelectedGroups(new Set()) // Clear selection
-  }
-
-  // Handle batch YGÖ generation error
-  const handleBatchError = (error) => {
-    setShowBatchProgress(false)
-    toast.error(`Toplu YGÖ üretimi başarısız: ${error}`)
-  }
-
-  // Handle close batch results
-  const handleCloseBatchResults = () => {
-    setShowBatchResults(false)
-    setBatchResults(null)
-    setBatchJobId(null)
   }
 
   // Loading state
@@ -230,97 +214,6 @@ const GroupList = () => {
           </div>
         ))}
       </div>
-
-      {/* Batch Progress Modal */}
-      <YGOProgressModal
-        isOpen={showBatchProgress}
-        jobId={batchJobId}
-        onComplete={handleBatchComplete}
-        onError={handleBatchError}
-      />
-
-      {/* Batch Results Modal */}
-      {showBatchResults && batchResults && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={handleCloseBatchResults}
-          />
-
-          {/* Modal */}
-          <div className="relative z-10 w-full max-w-4xl mx-4 bg-background rounded-lg shadow-2xl border border-border max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">
-                  Toplu YGÖ Üretim Sonuçları
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {batchResults.groups_processed} gruptan {batchResults.results?.filter(r => r.status === 'success').length} başarılı
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCloseBatchResults}
-              >
-                ×
-              </Button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-4">
-                {batchResults.results?.map((result, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-lg border ${
-                      result.status === 'success'
-                        ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-                        : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold">{result.group_name}</h3>
-                      <Badge variant={result.status === 'success' ? 'default' : 'destructive'}>
-                        {result.status === 'success' ? 'Başarılı' : 'Başarısız'}
-                      </Badge>
-                    </div>
-
-                    {result.status === 'success' ? (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {result.items_processed} madde işlendi
-                        </p>
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-sm font-medium text-primary">
-                            Üretilen YGÖ'yü görüntüle
-                          </summary>
-                          <div className="mt-2 p-3 bg-muted/30 rounded text-xs font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
-                            {result.ygo_text}
-                          </div>
-                        </details>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        Hata: {result.error}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end p-6 border-t border-border">
-              <Button onClick={handleCloseBatchResults}>
-                Kapat
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

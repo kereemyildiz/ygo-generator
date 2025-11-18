@@ -29,6 +29,10 @@ export const AppProvider = ({ children }) => {
   const [orphanedItems, setOrphanedItems] = useState([])
   const [statistics, setStatistics] = useState(null)
 
+  // YGÖ Job tracking state
+  const [activeYGOJobs, setActiveYGOJobs] = useState([]) // Jobs currently running
+  const [completedYGOResults, setCompletedYGOResults] = useState([]) // Completed results for viewing
+
   // Separate loading states for different operations
   const [loadingFilesFetch, setLoadingFilesFetch] = useState(false) // For fetching file list
   const [loadingFilesUpload, setLoadingFilesUpload] = useState(false) // For uploading files
@@ -295,6 +299,74 @@ export const AppProvider = ({ children }) => {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ===== YGÖ Job Management =====
+
+  /**
+   * Start tracking a YGÖ job (non-blocking)
+   */
+  const trackYGOJob = useCallback((jobId, jobInfo) => {
+    setActiveYGOJobs(prev => [...prev, { jobId, ...jobInfo, startedAt: new Date() }])
+    console.log('🎯 Started tracking YGÖ job:', jobId, jobInfo)
+  }, [])
+
+  /**
+   * Update status of a tracked job
+   */
+  const updateYGOJobStatus = useCallback((jobId, statusUpdate) => {
+    setActiveYGOJobs(prev =>
+      prev.map(job =>
+        job.jobId === jobId ? { ...job, ...statusUpdate } : job
+      )
+    )
+  }, [])
+
+  /**
+   * Handle job completion
+   */
+  const completeYGOJob = useCallback((jobId, result) => {
+    console.log('✅ YGÖ job completed:', jobId, result)
+
+    // Remove from active jobs
+    setActiveYGOJobs(prev => prev.filter(job => job.jobId !== jobId))
+
+    // Add to completed results
+    setCompletedYGOResults(prev => [{
+      jobId,
+      result,
+      completedAt: new Date()
+    }, ...prev])
+
+    // Show success notification
+    showMessage(`YGÖ üretimi tamamlandı: ${result.group_name}`)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Handle job failure
+   */
+  const failYGOJob = useCallback((jobId, error) => {
+    console.error('❌ YGÖ job failed:', jobId, error)
+
+    // Remove from active jobs
+    setActiveYGOJobs(prev => prev.filter(job => job.jobId !== jobId))
+
+    // Show error
+    handleError(new Error(error))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Remove a completed result
+   */
+  const removeCompletedYGOResult = useCallback((jobId) => {
+    setCompletedYGOResults(prev => prev.filter(r => r.jobId !== jobId))
+  }, [])
+
+  /**
+   * Clear all completed results
+   */
+  const clearCompletedYGOResults = useCallback(() => {
+    setCompletedYGOResults([])
+  }, [])
+
   // Context value
   const value = {
     // State
@@ -308,6 +380,9 @@ export const AppProvider = ({ children }) => {
     loadingGroups,
     loadingOrphaned,
     loadingAnalysis,
+    // YGÖ Job tracking
+    activeYGOJobs,
+    completedYGOResults,
     // Actions
     fetchUploadedFiles,
     uploadFiles,
@@ -325,6 +400,13 @@ export const AppProvider = ({ children }) => {
     addOrphanedToGroup,
     createGroupFromOrphaned,
     clearAllGroups,
+    // YGÖ Job actions
+    trackYGOJob,
+    updateYGOJobStatus,
+    completeYGOJob,
+    failYGOJob,
+    removeCompletedYGOResult,
+    clearCompletedYGOResults,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

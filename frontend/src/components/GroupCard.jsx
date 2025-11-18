@@ -15,8 +15,6 @@ import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
 import { exportGroupAsJSON, exportGroupAsExcel, createManualItem, generateYGO } from '../lib/api'
-import YGOResultModal from './YGOResultModal'
-import YGOProgressModal from './YGOProgressModal'
 
 /**
  * VirtualizedRow Component
@@ -147,7 +145,7 @@ const VirtualizedRow = memo(({ index, style, data }) => {
 VirtualizedRow.displayName = 'VirtualizedRow'
 
 const GroupCard = ({ group }) => {
-  const { deleteGroup, removeItemFromGroup, updateGroup, fetchGroups } = useApp()
+  const { deleteGroup, removeItemFromGroup, updateGroup, fetchGroups, trackYGOJob } = useApp()
   const toast = useToast()
   const { confirm } = useConfirm()
   const [expanded, setExpanded] = useState(false)
@@ -159,10 +157,6 @@ const GroupCard = ({ group }) => {
   const [manualItemDescription, setManualItemDescription] = useState('')
   const [creatingManualItem, setCreatingManualItem] = useState(false)
   const [selectedItems, setSelectedItems] = useState(new Set())
-  const [ygoJobId, setYgoJobId] = useState(null)
-  const [showYgoProgress, setShowYgoProgress] = useState(false)
-  const [ygoResult, setYgoResult] = useState(null)
-  const [showYgoResult, setShowYgoResult] = useState(false)
   const listRef = useRef(null)
 
   // Group items by source file
@@ -340,7 +334,7 @@ const GroupCard = ({ group }) => {
     }
   }
 
-  // Handle YGÖ generation
+  // Handle YGÖ generation (non-blocking)
   const handleGenerateYGO = async () => {
     try {
       // Get item IDs (selected or all)
@@ -363,11 +357,16 @@ const GroupCard = ({ group }) => {
         timestamp: new Date().toISOString()
       })
 
-      // Store job ID and show progress modal
-      setYgoJobId(response.job_id)
-      setShowYgoProgress(true)
+      // Track job in global state (non-blocking!)
+      trackYGOJob(response.job_id, {
+        groupId: group.group_id,
+        groupName: group.group_name,
+        itemCount: itemIds ? itemIds.length : group.items.length,
+        status: 'pending',
+        progress: 0
+      })
 
-      toast.success(response.message)
+      toast.success(`${response.message} - Arka planda çalışmaya devam edebilirsiniz`)
     } catch (err) {
       console.error('❌ YGÖ Generation Failed:', {
         error: err,
@@ -377,26 +376,6 @@ const GroupCard = ({ group }) => {
       })
       toast.error(err.response?.data?.detail || 'YGÖ üretimi başlatılamadı')
     }
-  }
-
-  // Handle YGÖ generation complete
-  const handleYGOComplete = (result) => {
-    setShowYgoProgress(false)
-    setYgoResult(result)
-    setShowYgoResult(true)
-  }
-
-  // Handle YGÖ generation error
-  const handleYGOError = (error) => {
-    setShowYgoProgress(false)
-    toast.error(`YGÖ üretimi başarısız: ${error}`)
-  }
-
-  // Handle YGÖ result modal close
-  const handleCloseYGOResult = () => {
-    setShowYgoResult(false)
-    setYgoResult(null)
-    setYgoJobId(null)
   }
 
   return (
@@ -644,20 +623,6 @@ const GroupCard = ({ group }) => {
         </div>
       </Modal>
 
-      {/* YGÖ Progress Modal */}
-      <YGOProgressModal
-        isOpen={showYgoProgress}
-        jobId={ygoJobId}
-        onComplete={handleYGOComplete}
-        onError={handleYGOError}
-      />
-
-      {/* YGÖ Result Modal */}
-      <YGOResultModal
-        isOpen={showYgoResult}
-        onClose={handleCloseYGOResult}
-        result={ygoResult}
-      />
     </Card>
   )
 }

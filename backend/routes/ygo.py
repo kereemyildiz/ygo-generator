@@ -93,13 +93,14 @@ async def generate_ygo_task(job_id: str, group_id: str, item_ids: Optional[List[
         # Update progress to complete
         job_manager.update_job_progress(job_id, len(items))
 
-        # Complete job with result
+        # Complete job with result (include input items for clear INPUTS vs OUTPUT display)
         result = {
             "group_id": group_id,
             "group_name": group['group_name'],
             "ygo_text": ygo_text,
             "items_processed": len(items),
-            "total_items": len(group['items'])
+            "total_items": len(group['items']),
+            "input_items": items  # Include input items so frontend can show what went IN
         }
 
         job_manager.complete_job(job_id, result)
@@ -147,6 +148,7 @@ async def generate_ygo_batch_task(job_id: str, group_ids: List[str]):
                     "group_name": group['group_name'],
                     "ygo_text": ygo_text,
                     "items_processed": len(group['items']),
+                    "input_items": group['items'],  # Include input items for clear display
                     "status": "success"
                 })
 

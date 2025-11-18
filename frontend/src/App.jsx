@@ -12,6 +12,7 @@ import FileUpload from './components/FileUpload'
 import FileExplorer from './components/FileExplorer'
 import GroupList from './components/GroupList'
 import OrphanedItems from './components/OrphanedItems'
+import YGOJobTracker from './components/YGOJobTracker'
 
 // Main content component (wrapped by providers)
 const AppContent = () => {
@@ -32,6 +33,9 @@ const AppContent = () => {
         {/* Orphaned Items Section */}
         <OrphanedItems />
       </main>
+
+      {/* Non-blocking YGÖ Job Tracker - Fixed at bottom */}
+      <YGOJobTracker />
 
       {/* Footer */}
       <footer className="bg-muted py-6 mt-12">
