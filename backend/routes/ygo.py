@@ -90,6 +90,14 @@ async def generate_ygo_task(job_id: str, group_id: str, item_ids: Optional[List[
             group_name=group['group_name']
         )
 
+        # Debug logging
+        print(f"🔍 DEBUG: Generated YGÖ for job {job_id}")
+        print(f"  - Group: {group['group_name']}")
+        print(f"  - Items processed: {len(items)}")
+        print(f"  - YGÖ text length: {len(ygo_text) if ygo_text else 0}")
+        print(f"  - YGÖ text type: {type(ygo_text)}")
+        print(f"  - YGÖ text preview: {ygo_text[:200] if ygo_text else 'EMPTY'}")
+
         # Update progress to complete
         job_manager.update_job_progress(job_id, len(items))
 
@@ -102,6 +110,11 @@ async def generate_ygo_task(job_id: str, group_id: str, item_ids: Optional[List[
             "total_items": len(group['items']),
             "input_items": items  # Include input items so frontend can show what went IN
         }
+
+        print(f"🔍 DEBUG: Result structure for job {job_id}:")
+        print(f"  - Result keys: {list(result.keys())}")
+        print(f"  - Result ygo_text type: {type(result.get('ygo_text'))}")
+        print(f"  - Result ygo_text length: {len(result.get('ygo_text', ''))}")
 
         job_manager.complete_job(job_id, result)
 
@@ -299,6 +312,16 @@ async def get_job_status(job_id: str):
     job = job_manager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    # Debug logging
+    if job.get('status') == 'completed':
+        print(f"🔍 DEBUG: Returning completed job status for {job_id}")
+        print(f"  - Job keys: {list(job.keys())}")
+        print(f"  - Result type: {type(job.get('result'))}")
+        if isinstance(job.get('result'), dict):
+            print(f"  - Result keys: {list(job['result'].keys())}")
+            print(f"  - ygo_text length: {len(job['result'].get('ygo_text', ''))}")
+            print(f"  - ygo_text preview: {job['result'].get('ygo_text', '')[:100]}")
 
     return JobStatusResponse(**job)
 

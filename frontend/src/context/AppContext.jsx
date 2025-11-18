@@ -325,6 +325,13 @@ export const AppProvider = ({ children }) => {
    */
   const completeYGOJob = useCallback((jobId, result) => {
     console.log('✅ YGÖ job completed:', jobId, result)
+    console.log('🔍 DEBUG: Storing completed job:', {
+      jobId,
+      resultKeys: result ? Object.keys(result) : [],
+      ygoTextLength: result?.ygo_text?.length || 0,
+      ygoTextPreview: result?.ygo_text?.substring(0, 100) || 'EMPTY',
+      inputItemsCount: result?.input_items?.length || 0
+    })
 
     // Remove from active jobs
     setActiveYGOJobs(prev => prev.filter(job => job.jobId !== jobId))
@@ -337,7 +344,7 @@ export const AppProvider = ({ children }) => {
     }, ...prev])
 
     // Show success notification
-    showMessage(`YGÖ üretimi tamamlandı: ${result.group_name}`)
+    showMessage(`YGÖ üretimi tamamlandı: ${result?.group_name || 'YGÖ'}`)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /**

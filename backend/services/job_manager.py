@@ -112,8 +112,19 @@ class JobManager:
             result: Job result data
         """
         if job_id in self.jobs:
+            print(f"🔍 DEBUG: JobManager.complete_job called for {job_id}")
+            print(f"  - Result type: {type(result)}")
+            print(f"  - Result keys: {list(result.keys()) if isinstance(result, dict) else 'NOT A DICT'}")
+            if isinstance(result, dict):
+                print(f"  - ygo_text in result: {'ygo_text' in result}")
+                print(f"  - ygo_text type: {type(result.get('ygo_text'))}")
+                print(f"  - ygo_text length: {len(result.get('ygo_text', ''))}")
+
             self.jobs[job_id]['result'] = result
             self.update_job_status(job_id, JobStatus.COMPLETED)
+
+            print(f"🔍 DEBUG: Job {job_id} stored result")
+            print(f"  - Stored result ygo_text length: {len(self.jobs[job_id]['result'].get('ygo_text', '')) if isinstance(self.jobs[job_id]['result'], dict) else 'N/A'}")
 
     def fail_job(self, job_id: str, error: str) -> None:
         """

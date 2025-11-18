@@ -10,6 +10,7 @@ import { Button } from './ui/Button'
 import { useApp } from '../context/AppContext'
 import { getYGOJobStatus } from '../lib/api'
 import YGOResultModal from './YGOResultModal'
+import BatchYGOResultModal from './BatchYGOResultModal'
 
 const YGOJobTracker = () => {
   const {
@@ -23,6 +24,8 @@ const YGOJobTracker = () => {
 
   const [selectedResult, setSelectedResult] = useState(null)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [selectedBatchResult, setSelectedBatchResult] = useState(null)
+  const [showBatchResultModal, setShowBatchResultModal] = useState(false)
 
   // Poll active jobs for status updates
   useEffect(() => {
@@ -51,6 +54,14 @@ const YGOJobTracker = () => {
 
           // Handle completion
           if (jobData.status === 'completed') {
+            console.log('🔍 DEBUG: Job completed, checking result structure:', {
+              jobId: job.jobId,
+              hasResult: !!jobData.result,
+              resultKeys: jobData.result ? Object.keys(jobData.result) : [],
+              ygoTextLength: jobData.result?.ygo_text?.length || 0,
+              ygoTextPreview: jobData.result?.ygo_text?.substring(0, 100) || 'EMPTY',
+              inputItemsCount: jobData.result?.input_items?.length || 0
+            })
             completeYGOJob(job.jobId, jobData.result)
           } else if (jobData.status === 'failed') {
             failYGOJob(job.jobId, jobData.error)
@@ -65,15 +76,39 @@ const YGOJobTracker = () => {
   }, [activeYGOJobs, updateYGOJobStatus, completeYGOJob, failYGOJob])
 
   // Handle view result
-  const handleViewResult = (result) => {
-    setSelectedResult(result.result)
-    setShowResultModal(true)
+  const handleViewResult = (completedJob) => {
+    console.log('🔍 DEBUG: Opening result modal:', {
+      completedJobKeys: Object.keys(completedJob),
+      hasResult: !!completedJob.result,
+      resultKeys: completedJob.result ? Object.keys(completedJob.result) : [],
+      ygoTextLength: completedJob.result?.ygo_text?.length || 0,
+      ygoTextPreview: completedJob.result?.ygo_text?.substring(0, 100) || 'EMPTY',
+      isBatchResult: !!completedJob.result?.results
+    })
+
+    // Check if this is a batch result (has "results" array) or single result (has "ygo_text")
+    if (completedJob.result?.results) {
+      // Batch result
+      console.log('📦 Opening BATCH result modal with', completedJob.result.results.length, 'groups')
+      setSelectedBatchResult(completedJob.result)
+      setShowBatchResultModal(true)
+    } else {
+      // Single result
+      console.log('📄 Opening SINGLE result modal')
+      setSelectedResult(completedJob.result)
+      setShowResultModal(true)
+    }
   }
 
-  // Handle close result modal
+  // Handle close result modals
   const handleCloseResult = () => {
     setShowResultModal(false)
     setSelectedResult(null)
+  }
+
+  const handleCloseBatchResult = () => {
+    setShowBatchResultModal(false)
+    setSelectedBatchResult(null)
   }
 
   // Handle dismiss completed result
@@ -188,11 +223,18 @@ const YGOJobTracker = () => {
         </div>
       </div>
 
-      {/* Result Modal */}
+      {/* Single Result Modal */}
       <YGOResultModal
         isOpen={showResultModal}
         onClose={handleCloseResult}
         result={selectedResult}
+      />
+
+      {/* Batch Result Modal */}
+      <BatchYGOResultModal
+        isOpen={showBatchResultModal}
+        onClose={handleCloseBatchResult}
+        batchResult={selectedBatchResult}
       />
     </>
   )

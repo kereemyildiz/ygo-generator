@@ -15,6 +15,19 @@ const YGOResultModal = ({ isOpen, onClose, result }) => {
   const [copied, setCopied] = useState(false)
   const [showInputs, setShowInputs] = useState(false)
 
+  // Debug logging
+  if (isOpen && result) {
+    console.log('🔍 DEBUG: YGOResultModal received:', {
+      resultKeys: Object.keys(result),
+      groupName: result.group_name,
+      ygoTextType: typeof result.ygo_text,
+      ygoTextLength: result.ygo_text?.length || 0,
+      ygoTextPreview: result.ygo_text?.substring(0, 200) || 'EMPTY OR UNDEFINED',
+      inputItemsCount: result.input_items?.length || 0,
+      fullResult: result
+    })
+  }
+
   if (!isOpen || !result) return null
 
   const handleCopy = async () => {
