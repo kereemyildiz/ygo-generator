@@ -30,7 +30,8 @@ export const AppProvider = ({ children }) => {
   const [statistics, setStatistics] = useState(null)
 
   // Separate loading states for different operations
-  const [loadingFiles, setLoadingFiles] = useState(false)
+  const [loadingFilesFetch, setLoadingFilesFetch] = useState(false) // For fetching file list
+  const [loadingFilesUpload, setLoadingFilesUpload] = useState(false) // For uploading files
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [loadingOrphaned, setLoadingOrphaned] = useState(false)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
@@ -51,19 +52,19 @@ export const AppProvider = ({ children }) => {
 
   const fetchUploadedFiles = useCallback(async () => {
     try {
-      setLoadingFiles(true)
+      setLoadingFilesFetch(true)
       const data = await api.getUploadedFiles()
       setUploadedFiles(data.files)
     } catch (err) {
       handleError(err)
     } finally {
-      setLoadingFiles(false)
+      setLoadingFilesFetch(false)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const uploadFiles = useCallback(async (files) => {
     try {
-      setLoadingFiles(true)
+      setLoadingFilesUpload(true)
       const data = await api.uploadFiles(files)
       showMessage(data.message)
       await fetchUploadedFiles()
@@ -72,13 +73,13 @@ export const AppProvider = ({ children }) => {
       handleError(err)
       throw err
     } finally {
-      setLoadingFiles(false)
+      setLoadingFilesUpload(false)
     }
   }, [fetchUploadedFiles]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteFile = useCallback(async (filename) => {
     try {
-      setLoadingFiles(true)
+      setLoadingFilesUpload(true)
       const data = await api.deleteFile(filename)
       showMessage(data.message)
       await fetchUploadedFiles()
@@ -86,7 +87,7 @@ export const AppProvider = ({ children }) => {
       handleError(err)
       throw err
     } finally {
-      setLoadingFiles(false)
+      setLoadingFilesUpload(false)
     }
   }, [fetchUploadedFiles]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -302,7 +303,8 @@ export const AppProvider = ({ children }) => {
     orphanedItems,
     statistics,
     // Loading states
-    loadingFiles,
+    loadingFilesFetch,
+    loadingFilesUpload,
     loadingGroups,
     loadingOrphaned,
     loadingAnalysis,
