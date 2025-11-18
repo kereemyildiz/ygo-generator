@@ -11,6 +11,11 @@ A web application for managing linked requirements documents in defense industry
 - **Export Options**: Export groups as JSON or Excel files
 - **CRUD Operations**: Add/remove items, delete groups, and merge groups
 - **Real-time Statistics**: View group counts, item counts, and average group size
+- **🤖 AI-Powered YGÖ Generation**: Generate Software Requirement Specifications using OpenAI GPT models
+  - Single group YGÖ generation with optional item selection
+  - Batch processing for multiple groups
+  - Non-blocking operations with real-time progress tracking
+  - View, copy, or download generated specifications
 
 ## Tech Stack
 
@@ -20,6 +25,7 @@ A web application for managing linked requirements documents in defense industry
 - **openpyxl** - Excel file reading/writing
 - **networkx** - Graph analysis for link relationships
 - **uvicorn** - ASGI server
+- **openai** - AI-powered YGÖ (SRS) generation
 
 ### Frontend
 - **React 18** with JavaScript (NO TypeScript)
@@ -103,7 +109,18 @@ pip install -r requirements.txt
 python test_services.py
 ```
 
-6. Start the FastAPI server:
+6. **(Optional) Configure OpenAI API for YGÖ Generation:**
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and add your OpenAI API key
+# OPENAI_API_KEY=sk-your-actual-api-key-here
+```
+
+See [YGO_SETUP.md](YGO_SETUP.md) for detailed YGÖ feature setup instructions.
+
+7. Start the FastAPI server:
 ```bash
 python main.py
 ```
@@ -111,6 +128,7 @@ python main.py
 The backend API will be available at `http://localhost:8000`
 - API Documentation: `http://localhost:8000/api/docs`
 - Alternative Docs: `http://localhost:8000/api/redoc`
+- YGÖ Service Health: `http://localhost:8000/api/ygo/health`
 
 ### Frontend Setup
 

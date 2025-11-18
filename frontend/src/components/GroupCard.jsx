@@ -14,7 +14,9 @@ import { getFileColor } from '../lib/utils'
 import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
-import { exportGroupAsJSON, exportGroupAsExcel, createManualItem } from '../lib/api'
+import { exportGroupAsJSON, exportGroupAsExcel, createManualItem, generateYGO } from '../lib/api'
+import YGOResultModal from './YGOResultModal'
+import YGOProgressModal from './YGOProgressModal'
 
 /**
  * VirtualizedRow Component
@@ -157,6 +159,10 @@ const GroupCard = ({ group }) => {
   const [manualItemDescription, setManualItemDescription] = useState('')
   const [creatingManualItem, setCreatingManualItem] = useState(false)
   const [selectedItems, setSelectedItems] = useState(new Set())
+  const [ygoJobId, setYgoJobId] = useState(null)
+  const [showYgoProgress, setShowYgoProgress] = useState(false)
+  const [ygoResult, setYgoResult] = useState(null)
+  const [showYgoResult, setShowYgoResult] = useState(false)
   const listRef = useRef(null)
 
   // Group items by source file
@@ -334,6 +340,46 @@ const GroupCard = ({ group }) => {
     }
   }
 
+  // Handle YGÖ generation
+  const handleGenerateYGO = async () => {
+    try {
+      // Get item IDs (selected or null for all)
+      const itemIds = selectedItems.size > 0 ? Array.from(selectedItems) : null
+
+      // Start YGÖ generation
+      const response = await generateYGO(group.group_id, itemIds)
+
+      // Store job ID and show progress modal
+      setYgoJobId(response.job_id)
+      setShowYgoProgress(true)
+
+      toast.success(response.message)
+    } catch (err) {
+      console.error('Failed to generate YGÖ:', err)
+      toast.error(err.response?.data?.detail || 'YGÖ üretimi başlatılamadı')
+    }
+  }
+
+  // Handle YGÖ generation complete
+  const handleYGOComplete = (result) => {
+    setShowYgoProgress(false)
+    setYgoResult(result)
+    setShowYgoResult(true)
+  }
+
+  // Handle YGÖ generation error
+  const handleYGOError = (error) => {
+    setShowYgoProgress(false)
+    toast.error(`YGÖ üretimi başarısız: ${error}`)
+  }
+
+  // Handle YGÖ result modal close
+  const handleCloseYGOResult = () => {
+    setShowYgoResult(false)
+    setYgoResult(null)
+    setYgoJobId(null)
+  }
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -395,9 +441,10 @@ const GroupCard = ({ group }) => {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
-            {/* Generate SRS Button - AI Feature (Demo) */}
+            {/* Generate SRS Button - AI Feature */}
             <Button
               size="sm"
+              onClick={handleGenerateYGO}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-md hover:shadow-lg transition-all"
               title={selectedItems.size > 0
                 ? `Seçili ${selectedItems.size} madde için YGÖ üret`
@@ -577,6 +624,21 @@ const GroupCard = ({ group }) => {
           </p>
         </div>
       </Modal>
+
+      {/* YGÖ Progress Modal */}
+      <YGOProgressModal
+        isOpen={showYgoProgress}
+        jobId={ygoJobId}
+        onComplete={handleYGOComplete}
+        onError={handleYGOError}
+      />
+
+      {/* YGÖ Result Modal */}
+      <YGOResultModal
+        isOpen={showYgoResult}
+        onClose={handleCloseYGOResult}
+        result={ygoResult}
+      />
     </Card>
   )
 }

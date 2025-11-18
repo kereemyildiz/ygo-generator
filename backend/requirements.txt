@@ -14,3 +14,6 @@ pydantic-settings>=2.6.0
 
 # Utilities
 python-dotenv>=1.0.0
+
+# AI/ML
+openai>=1.0.0
