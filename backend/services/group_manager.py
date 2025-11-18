@@ -311,6 +311,15 @@ class GroupManager:
             'group_ids': list(self.groups.keys())
         }
 
+    def clear_all(self) -> None:
+        """
+        Clear all groups and orphaned items.
+        Used on application startup to ensure clean state.
+        """
+        self.groups = {}
+        self.orphaned_items = []
+        self.next_id = 1
+
 
 # Global instance for the application
 group_manager = GroupManager()

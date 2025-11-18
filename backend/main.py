@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from routes import upload, groups, files
+from routes import upload, groups, files, ygo
+from services.group_manager import group_manager
 
 
 # Create FastAPI application
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(files.router)
 app.include_router(upload.router)
 app.include_router(groups.router)
+app.include_router(ygo.router)
 
 
 # Root endpoint
@@ -48,7 +50,8 @@ async def root():
             "upload": "/api/upload",
             "files": "/api/files",
             "analyze": "/api/analyze",
-            "groups": "/api/groups"
+            "groups": "/api/groups",
+            "ygo": "/api/ygo"
         }
     }
 
@@ -80,11 +83,15 @@ async def global_exception_handler(request, exc):
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
+    # Clear all in-memory data on startup to ensure clean state
+    group_manager.clear_all()
+
     print("="*80)
     print("  SRS Link Manager API - Starting")
     print("="*80)
     print(f"  Docs: http://localhost:8000/api/docs")
     print(f"  Health: http://localhost:8000/health")
+    print("  In-memory storage cleared - starting with clean state")
     print("="*80)
 
 

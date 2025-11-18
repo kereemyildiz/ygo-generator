@@ -305,4 +305,62 @@ export const createManualItem = async (groupId, title, description = '') => {
   return response.data
 }
 
+// ============================================================================
+// YGÖ (Software Requirement Specifications) Generation
+// ============================================================================
+
+/**
+ * Generate YGÖ for a single group
+ * @param {string} groupId - The group ID
+ * @param {string[]} itemIds - Optional array of item IDs (empty = all items)
+ * @returns {Promise} Job response with job_id
+ */
+export const generateYGO = async (groupId, itemIds = null) => {
+  const response = await api.post('/ygo/generate', {
+    group_id: groupId,
+    item_ids: itemIds,
+  })
+  return response.data
+}
+
+/**
+ * Generate YGÖ for multiple groups (batch processing)
+ * @param {string[]} groupIds - Array of group IDs
+ * @returns {Promise} Job response with job_id
+ */
+export const generateYGOBatch = async (groupIds) => {
+  const response = await api.post('/ygo/generate-batch', {
+    group_ids: groupIds,
+  })
+  return response.data
+}
+
+/**
+ * Get YGÖ generation job status
+ * @param {string} jobId - The job ID
+ * @returns {Promise} Job status and result
+ */
+export const getYGOJobStatus = async (jobId) => {
+  const response = await api.get(`/ygo/jobs/${jobId}`)
+  return response.data
+}
+
+/**
+ * Get all YGÖ generation jobs
+ * @returns {Promise} All jobs
+ */
+export const getAllYGOJobs = async () => {
+  const response = await api.get('/ygo/jobs')
+  return response.data
+}
+
+/**
+ * Check YGÖ service health
+ * @returns {Promise} Health status
+ */
+export const checkYGOHealth = async () => {
+  const response = await api.get('/ygo/health')
+  return response.data
+}
+
 export default api

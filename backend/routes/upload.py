@@ -101,8 +101,6 @@ async def analyze_files(request: AnalysisRequest = None):
     Returns:
         AnalysisResponse with analysis results
     """
-
-    print("AAAAAAAAAAAAAAA")
     # Get files to analyze
     if request and request.file_paths:
         file_paths = [UPLOAD_DIR / Path(fp).name for fp in request.file_paths]
