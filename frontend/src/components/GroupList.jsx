@@ -15,13 +15,15 @@ import { generateYGOBatch, getYGOJobStatus } from '../lib/api'
 import YGOProgressModal from './YGOProgressModal'
 
 const GroupList = () => {
-  const { groups, fetchGroups, fetchStatistics, loading } = useApp()
+
+  const { groups, fetchGroups, fetchStatistics, loadingGroups } = useApp()
   const toast = useToast()
   const [selectedGroups, setSelectedGroups] = useState(new Set())
   const [batchJobId, setBatchJobId] = useState(null)
   const [showBatchProgress, setShowBatchProgress] = useState(false)
   const [batchResults, setBatchResults] = useState(null)
   const [showBatchResults, setShowBatchResults] = useState(false)
+
 
   // Fetch groups on mount
   useEffect(() => {
@@ -94,7 +96,7 @@ const GroupList = () => {
   }
 
   // Loading state
-  if (loading && groups.length === 0) {
+  if (loadingGroups && groups.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
