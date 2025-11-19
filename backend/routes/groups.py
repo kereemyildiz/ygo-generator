@@ -17,7 +17,7 @@ from models.schemas import (
     GroupResponse, GroupListResponse, GroupUpdate,
     AddItemRequest, RemoveItemRequest, MergeGroupsRequest, MergeGroupsResponse,
     StatisticsResponse, OrphanedItemsResponse, AddOrphanedToGroupRequest,
-    CreateGroupFromOrphanedRequest, CreateManualItemRequest
+    CreateGroupFromOrphanedRequest, CreateManualItemRequest, CreateGroupRequest
 )
 from services.group_manager import group_manager
 
@@ -147,6 +147,37 @@ async def create_group_from_orphaned(request: CreateGroupFromOrphanedRequest):
             status_code=404,
             detail="No matching orphaned items found"
         )
+
+    return GroupResponse(**new_group)
+
+
+@router.post("/create", response_model=GroupResponse)
+async def create_group(request: CreateGroupRequest):
+    """
+    Create a new group from any items (not limited to orphaned items).
+    This allows creating groups from items in file viewer regardless of orphan status.
+
+    Args:
+        request: Request with items and group name
+
+    Returns:
+        Created group
+    """
+    if not request.items:
+        raise HTTPException(
+            status_code=400,
+            detail="No items provided for group creation"
+        )
+
+    # Convert items to dict format
+    items = [item.model_dump() for item in request.items]
+
+    # Create group
+    group_data = {
+        'group_name': request.group_name,
+        'items': items
+    }
+    new_group = group_manager.create_group(group_data)
 
     return GroupResponse(**new_group)
 
@@ -304,7 +335,7 @@ async def create_manual_item(request: CreateManualItemRequest):
         'source_file': 'manual',
         'source_type': 'manual',
         'data': {
-            'Title': request.title,
+            'Title': request.title or f'Manual Item {manual_id}',
             'Description': request.description or '',
             'Created': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         },

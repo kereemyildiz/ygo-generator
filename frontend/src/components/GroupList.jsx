@@ -4,19 +4,23 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Loader2, FolderOpen, Sparkles, CheckSquare, Square, X } from 'lucide-react'
+import { Loader2, FolderOpen, Sparkles, CheckSquare, Square, X, FolderPlus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
 import GroupCard from './GroupCard'
 import { Alert, AlertDescription, AlertTitle } from './ui/Alert'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
+import Modal from './ui/Modal'
 import { generateYGOBatch } from '../lib/api'
 
 const GroupList = () => {
-  const { groups, fetchGroups, fetchStatistics, loadingGroups, trackYGOJob } = useApp()
+  const { groups, fetchGroups, fetchStatistics, createNewGroup, loadingGroups, trackYGOJob } = useApp()
   const toast = useToast()
   const [selectedGroups, setSelectedGroups] = useState(new Set())
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [creatingGroup, setCreatingGroup] = useState(false)
 
   // Fetch groups on mount
   useEffect(() => {
@@ -95,6 +99,28 @@ const GroupList = () => {
     }
   }
 
+  // Handle create new group
+  const handleCreateNewGroup = async () => {
+    if (!newGroupName.trim()) {
+      toast.error('Grup adı gereklidir')
+      return
+    }
+
+    try {
+      setCreatingGroup(true)
+      await createNewGroup([], newGroupName)  // Empty group
+      toast.success(`Grup "${newGroupName}" oluşturuldu`)
+      setShowCreateGroupModal(false)
+      setNewGroupName('')
+      await fetchGroups()
+    } catch (err) {
+      console.error('Failed to create group:', err)
+      toast.error(err.response?.data?.detail || 'Grup oluşturulamadı')
+    } finally {
+      setCreatingGroup(false)
+    }
+  }
+
   // Loading state
   if (loadingGroups && groups.length === 0) {
     return (
@@ -127,30 +153,43 @@ const GroupList = () => {
           Gruplar ({groups.length})
         </h2>
 
-        {/* Select All Toggle */}
-        <Button
-          size="sm"
-          variant={selectedGroups.size > 0 ? "default" : "outline"}
-          onClick={selectAllGroups}
-          className="gap-2"
-        >
-          {selectedGroups.size === groups.length ? (
-            <>
-              <CheckSquare className="h-4 w-4" />
-              Seçimi Kaldır ({selectedGroups.size})
-            </>
-          ) : selectedGroups.size > 0 ? (
-            <>
-              <Square className="h-4 w-4" />
-              Tümünü Seç ({selectedGroups.size}/{groups.length})
-            </>
-          ) : (
-            <>
-              <Square className="h-4 w-4" />
-              Toplu Seçim
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Create New Group Button */}
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => setShowCreateGroupModal(true)}
+            className="gap-2 bg-green-600 hover:bg-green-700"
+          >
+            <FolderPlus className="h-4 w-4" />
+            Yeni Grup Oluştur
+          </Button>
+
+          {/* Select All Toggle */}
+          <Button
+            size="sm"
+            variant={selectedGroups.size > 0 ? "default" : "outline"}
+            onClick={selectAllGroups}
+            className="gap-2"
+          >
+            {selectedGroups.size === groups.length ? (
+              <>
+                <CheckSquare className="h-4 w-4" />
+                Seçimi Kaldır ({selectedGroups.size})
+              </>
+            ) : selectedGroups.size > 0 ? (
+              <>
+                <Square className="h-4 w-4" />
+                Tümünü Seç ({selectedGroups.size}/{groups.length})
+              </>
+            ) : (
+              <>
+                <Square className="h-4 w-4" />
+                Toplu Seçim
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Floating Batch Action Toolbar (appears when groups selected) */}
@@ -214,6 +253,67 @@ const GroupList = () => {
           </div>
         ))}
       </div>
+
+      {/* Create New Group Modal */}
+      <Modal
+        isOpen={showCreateGroupModal}
+        onClose={() => {
+          setShowCreateGroupModal(false)
+          setNewGroupName('')
+        }}
+        title="Yeni Grup Oluştur"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Grup Adı
+            </label>
+            <input
+              type="text"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !creatingGroup && newGroupName.trim()) {
+                  handleCreateNewGroup()
+                }
+              }}
+              placeholder="Örnek: Kimlik Doğrulama Modülü"
+              className="w-full px-3 py-2 border border-input rounded-md bg-background"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateGroupModal(false)
+                setNewGroupName('')
+              }}
+              disabled={creatingGroup}
+            >
+              İptal
+            </Button>
+            <Button
+              onClick={handleCreateNewGroup}
+              disabled={creatingGroup || !newGroupName.trim()}
+              className="gap-2"
+            >
+              {creatingGroup ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Oluşturuluyor...
+                </>
+              ) : (
+                <>
+                  <FolderPlus className="h-4 w-4" />
+                  Oluştur
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

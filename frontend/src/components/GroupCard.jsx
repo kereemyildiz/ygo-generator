@@ -313,11 +313,6 @@ const GroupCard = ({ group }) => {
 
   // Handle manual item creation
   const handleCreateManualItem = async () => {
-    if (!manualItemTitle.trim()) {
-      toast.error('Başlık gereklidir')
-      return
-    }
-
     try {
       setCreatingManualItem(true)
       await createManualItem(group.group_id, manualItemTitle, manualItemDescription)
@@ -580,7 +575,7 @@ const GroupCard = ({ group }) => {
             </Button>
             <Button
               onClick={handleCreateManualItem}
-              disabled={!manualItemDescription.trim() || creatingManualItem}
+              disabled={creatingManualItem}
             >
               {creatingManualItem ? 'Ekleniyor...' : 'Ekle'}
             </Button>

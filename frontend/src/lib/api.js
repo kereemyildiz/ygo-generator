@@ -282,6 +282,20 @@ export const createGroupFromOrphaned = async (itemIds, groupName) => {
 }
 
 /**
+ * Create a new group from any items (not limited to orphaned items)
+ * @param {Array<Object>} items - Array of item objects to include in the group
+ * @param {string} groupName - Name for the new group
+ * @returns {Promise} Created group
+ */
+export const createGroup = async (items, groupName) => {
+  const response = await api.post('/groups/create', {
+    items: items,
+    group_name: groupName,
+  })
+  return response.data
+}
+
+/**
  * Clear all groups and orphaned items
  * @returns {Promise} Delete response
  */

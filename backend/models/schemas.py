@@ -22,7 +22,7 @@ class ItemData(BaseModel):
 class CreateManualItemRequest(BaseModel):
     """Request to create a manual item in a group."""
     group_id: str = Field(..., description="ID of the group to add item to")
-    title: str = Field(..., description="Title of the manual item")
+    title: Optional[str] = Field(None, description="Optional title of the manual item")
     description: Optional[str] = Field(None, description="Optional description/notes")
 
 
@@ -161,4 +161,10 @@ class AddOrphanedToGroupRequest(BaseModel):
 class CreateGroupFromOrphanedRequest(BaseModel):
     """Request to create a new group from orphaned items."""
     item_ids: List[str] = Field(..., description="IDs of orphaned items to include")
+    group_name: str = Field(..., description="Name for the new group")
+
+
+class CreateGroupRequest(BaseModel):
+    """Request to create a new group from any items."""
+    items: List[ItemData] = Field(..., description="Items to include in the new group")
     group_name: str = Field(..., description="Name for the new group")

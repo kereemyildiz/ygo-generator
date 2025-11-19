@@ -19,7 +19,7 @@ import { useApp } from '../context/AppContext';
  * @param {Function} props.onClose - Callback when modal is closed
  */
 export default function FileViewer({ filename, onClose }) {
-  const { groups, addItemToGroup, createGroupFromOrphaned, fetchGroups } = useApp();
+  const { groups, addItemToGroup, createGroupFromOrphaned, createNewGroup, fetchGroups } = useApp();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -163,8 +163,9 @@ export default function FileViewer({ filename, onClose }) {
     if (selectedItems.size === 0 || !newGroupName.trim()) return;
 
     try {
-      const itemIds = Array.from(selectedItems);
-      await createGroupFromOrphaned(itemIds, newGroupName);
+      // Get the full item objects for selected items
+      const itemsToAdd = filteredItems.filter(item => selectedItems.has(item.id));
+      await createNewGroup(itemsToAdd, newGroupName);
       setSelectedItems(new Set());
       setShowGroupMenu(false);
       setNewGroupName('');
