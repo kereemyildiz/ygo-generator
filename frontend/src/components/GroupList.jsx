@@ -4,24 +4,28 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Loader2, FolderOpen, Sparkles, CheckSquare, Square } from 'lucide-react'
+import { Loader2, FolderOpen, Sparkles, CheckSquare, Square, FolderPlus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
 import GroupCard from './GroupCard'
 import { Alert, AlertDescription, AlertTitle } from './ui/Alert'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
+import Modal from './ui/Modal'
 import { generateYGOBatch, getYGOJobStatus } from '../lib/api'
 import YGOProgressModal from './YGOProgressModal'
 
 const GroupList = () => {
-  const { groups, fetchGroups, fetchStatistics, loading } = useApp()
+  const { groups, fetchGroups, fetchStatistics, createNewGroup, loading } = useApp()
   const toast = useToast()
   const [selectedGroups, setSelectedGroups] = useState(new Set())
   const [batchJobId, setBatchJobId] = useState(null)
   const [showBatchProgress, setShowBatchProgress] = useState(false)
   const [batchResults, setBatchResults] = useState(null)
   const [showBatchResults, setShowBatchResults] = useState(false)
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [creatingGroup, setCreatingGroup] = useState(false)
 
   // Fetch groups on mount
   useEffect(() => {
@@ -93,6 +97,29 @@ const GroupList = () => {
     setBatchJobId(null)
   }
 
+  // Handle create new group
+  const handleCreateNewGroup = async () => {
+    if (!newGroupName.trim()) {
+      toast.error('Grup adı gereklidir')
+      return
+    }
+
+    try {
+      setCreatingGroup(true)
+      // Create an empty group
+      await createNewGroup([], newGroupName)
+      toast.success(`Grup "${newGroupName}" oluşturuldu`)
+      setShowCreateGroupModal(false)
+      setNewGroupName('')
+      await fetchGroups()
+    } catch (err) {
+      console.error('Failed to create group:', err)
+      toast.error(err.response?.data?.detail || 'Grup oluşturulamadı')
+    } finally {
+      setCreatingGroup(false)
+    }
+  }
+
   // Loading state
   if (loading && groups.length === 0) {
     return (
@@ -143,25 +170,36 @@ const GroupList = () => {
           )}
         </div>
 
-        {/* Select All Button */}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={selectAllGroups}
-          className="gap-2"
-        >
-          {selectedGroups.size === groups.length ? (
-            <>
-              <CheckSquare className="h-4 w-4" />
-              Tümünü Kaldır
-            </>
-          ) : (
-            <>
-              <Square className="h-4 w-4" />
-              Tümünü Seç
-            </>
-          )}
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowCreateGroupModal(true)}
+            className="gap-2"
+          >
+            <FolderPlus className="h-4 w-4" />
+            Yeni Grup Oluştur
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={selectAllGroups}
+            className="gap-2"
+          >
+            {selectedGroups.size === groups.length ? (
+              <>
+                <CheckSquare className="h-4 w-4" />
+                Tümünü Kaldır
+              </>
+            ) : (
+              <>
+                <Square className="h-4 w-4" />
+                Tümünü Seç
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Group Cards */}
@@ -281,6 +319,59 @@ const GroupList = () => {
           </div>
         </div>
       )}
+
+      {/* Create New Group Modal */}
+      <Modal
+        isOpen={showCreateGroupModal}
+        onClose={() => {
+          setShowCreateGroupModal(false)
+          setNewGroupName('')
+        }}
+        title="Yeni Grup Oluştur"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Grup Adı
+            </label>
+            <input
+              type="text"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreateNewGroup()
+                }
+              }}
+              placeholder="Grup adını girin..."
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              autoFocus
+            />
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Boş bir grup oluşturulacak. Daha sonra manuel maddeler ekleyebilirsiniz.
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateGroupModal(false)
+                setNewGroupName('')
+              }}
+            >
+              İptal
+            </Button>
+            <Button
+              onClick={handleCreateNewGroup}
+              disabled={creatingGroup || !newGroupName.trim()}
+            >
+              {creatingGroup ? 'Oluşturuluyor...' : 'Oluştur'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

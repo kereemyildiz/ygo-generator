@@ -272,6 +272,25 @@ export const AppProvider = ({ children }) => {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const createNewGroup = useCallback(async (items, groupName) => {
+    try {
+      setLoading(true)
+      await api.createGroup(items, groupName)
+      showMessage(`Group "${groupName}" created successfully`)
+
+      // Refresh groups and statistics
+      await Promise.all([
+        api.getAllGroups().then(result => setGroups(result.groups)),
+        api.getStatistics().then(result => setStatistics(result))
+      ])
+    } catch (err) {
+      handleError(err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const clearAllGroups = useCallback(async () => {
     try {
       setLoading(true)
@@ -313,6 +332,7 @@ export const AppProvider = ({ children }) => {
     fetchOrphanedItems,
     addOrphanedToGroup,
     createGroupFromOrphaned,
+    createNewGroup,
     clearAllGroups,
   }
 
