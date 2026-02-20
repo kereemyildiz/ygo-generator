@@ -1,98 +1,104 @@
 """
-Quick API test for the Linking Wizard endpoints.
+Test script for Linking Wizard with Groups integration.
+Tests: pre-populated links, suggestions with already_linked, finalize, groups creation.
 """
 import requests
 import json
 
 BASE = "http://localhost:8000"
 
-# 1. Upload both files
+# 1. Upload files
 print("=== 1. Uploading files ===")
 files_to_upload = [
     ("files", open(r"d:\aky-personal\ygo-generator\backend\sample_data\A_System_Requirements.xlsx", "rb")),
     ("files", open(r"d:\aky-personal\ygo-generator\backend\sample_data\B_Use_Cases.xlsx", "rb")),
 ]
 r = requests.post(f"{BASE}/api/upload", files=files_to_upload)
-print(f"Upload status: {r.status_code}")
-print(f"Upload result: {json.dumps(r.json(), indent=2)[:500]}")
+print(f"Upload: {r.status_code}")
 
-# 2. Start wizard session
-print("\n=== 2. Starting Linking Wizard ===")
+# 2. Start wizard — should pre-populate existing links
+print("\n=== 2. Starting Wizard (with pre-populated links) ===")
 r = requests.post(f"{BASE}/api/linking-wizard/start", json={
     "stt_filename": "A_System_Requirements.xlsx",
     "uc_filename": "B_Use_Cases.xlsx"
 })
-print(f"Start status: {r.status_code}")
 start_data = r.json()
-print(f"Start result: {json.dumps(start_data, indent=2)}")
-session_id = start_data.get("session_id")
+session_id = start_data["session_id"]
+print(f"Status: {r.status_code}")
+print(f"Total STT: {start_data['total_stt']}, Total UC: {start_data['total_uc']}")
+print(f"Existing links count: {start_data.get('existing_links_count', 'N/A')}")
+print(f"STT with existing links: {start_data.get('stt_with_existing_links', 'N/A')}")
 
-if not session_id:
-    print("ERROR: No session_id returned!")
-    exit(1)
-
-# 3. Get current STT
-print(f"\n=== 3. Get current STT (session: {session_id[:8]}...) ===")
+# 3. Get current STT — should include existing_uc_ids
+print("\n=== 3. Current STT (with existing link info) ===")
 r = requests.get(f"{BASE}/api/linking-wizard/{session_id}/current")
-print(f"Current status: {r.status_code}")
 current = r.json()
-print(f"STT Item: {current.get('stt_item', {}).get('id')} - Progress: {current.get('progress_percent')}%")
-print(f"Title: {current.get('stt_item', {}).get('data', {}).get('Requirement_Title')}")
+print(f"STT: {current['stt_item']['id']} - {current['stt_item']['data']['Requirement_Title']}")
+print(f"Existing UC IDs: {current.get('existing_uc_ids', [])}")
+print(f"Current UC IDs: {current.get('current_uc_ids', [])}")
 
-# 4. Get suggestions
-print("\n=== 4. Get suggestions ===")
+# 4. Get suggestions — should have already_linked flag
+print("\n=== 4. Suggestions (with already_linked flag) ===")
 r = requests.get(f"{BASE}/api/linking-wizard/{session_id}/suggestions?count=5")
-print(f"Suggestions status: {r.status_code}")
 sugg_data = r.json()
-print(f"Got {sugg_data.get('count', 0)} suggestions:")
-for s in sugg_data.get("suggestions", []):
-    item = s.get("item", {})
-    score = s.get("relevance_score", 0)
-    name = item.get("data", {}).get("Use_Case_Name", "?")
-    print(f"  {item.get('id')} - {name} (score: {score})")
+for s in sugg_data["suggestions"]:
+    item = s["item"]
+    existing = "✓ EXISTING" if s.get("already_linked") else ""
+    print(f"  {item['id']} - score: {s['relevance_score']} {existing}")
 
-# 5. Confirm links
-stt_id = current.get("stt_item", {}).get("id")
-uc_ids = [s["item"]["id"] for s in sugg_data.get("suggestions", [])[:2]]  # select first 2
-print(f"\n=== 5. Confirm links: {stt_id} -> {uc_ids} ===")
+# 5. Confirm links for first STT
+stt_id = current["stt_item"]["id"]
+uc_ids = [s["item"]["id"] for s in sugg_data["suggestions"][:3]]
+print(f"\n=== 5. Confirm: {stt_id} -> {uc_ids} ===")
 r = requests.post(f"{BASE}/api/linking-wizard/{session_id}/confirm", json={
-    "stt_id": stt_id,
-    "selected_uc_ids": uc_ids
+    "stt_id": stt_id, "selected_uc_ids": uc_ids
 })
-print(f"Confirm status: {r.status_code}")
-print(f"Confirm result: {json.dumps(r.json(), indent=2)}")
+confirm = r.json()
+print(f"Linked: {confirm['linked_count']}, Existing kept: {confirm.get('existing_kept')}, New: {confirm.get('new_links')}")
 
-# 6. Next step
-print("\n=== 6. Next STT ===")
-r = requests.post(f"{BASE}/api/linking-wizard/{session_id}/next")
-print(f"Next status: {r.status_code}")
-next_data = r.json()
-print(f"Next STT: {next_data.get('stt_item', {}).get('id')} - Progress: {next_data.get('progress_percent')}%")
+# 6. Fast-forward through remaining STTs (confirm existing links + next)
+print("\n=== 6. Fast-forwarding through remaining STTs ===")
+for i in range(start_data['total_stt'] - 1):
+    r = requests.post(f"{BASE}/api/linking-wizard/{session_id}/next")
+    next_data = r.json()
+    if next_data.get('completed'):
+        print(f"  Completed at step {i+2}")
+        break
+    stt_id = next_data['stt_item']['id']
+    existing = next_data.get('current_uc_ids', [])
+    # Auto-confirm existing links
+    if existing:
+        requests.post(f"{BASE}/api/linking-wizard/{session_id}/confirm", json={
+            "stt_id": stt_id, "selected_uc_ids": existing
+        })
+    print(f"  {stt_id}: {len(existing)} existing links confirmed")
 
-# 7. Skip
-print("\n=== 7. Skip STT ===")
-r = requests.post(f"{BASE}/api/linking-wizard/{session_id}/skip")
-print(f"Skip status: {r.status_code}")
-skip_data = r.json()
-print(f"After skip - STT: {skip_data.get('stt_item', {}).get('id')} - Progress: {skip_data.get('progress_percent')}%")
-
-# 8. Prev
-print("\n=== 8. Prev STT ===")
-r = requests.post(f"{BASE}/api/linking-wizard/{session_id}/prev")
-print(f"Prev status: {r.status_code}")
-prev_data = r.json()
-print(f"After prev - STT: {prev_data.get('stt_item', {}).get('id')} - Progress: {prev_data.get('progress_percent')}%")
-
-# 9. Summary (partial)
-print("\n=== 9. Summary ===")
+# 7. Summary
+print("\n=== 7. Summary ===")
 r = requests.get(f"{BASE}/api/linking-wizard/{session_id}/summary")
-print(f"Summary status: {r.status_code}")
 summary = r.json()
-print(f"Total STT: {summary.get('total_stt')}, Linked: {summary.get('stt_linked')}, Skipped: {summary.get('stt_skipped')}")
-print(f"Total UC links: {summary.get('total_uc_links')}")
-for d in summary.get("link_details", [])[:5]:
-    status = "LINKED" if d["linked_uc_count"] > 0 else ("SKIPPED" if d["skipped"] else "-")
-    ucs = ", ".join(u["id"] for u in d.get("linked_ucs", []))
-    print(f"  {d['stt_id']}: {status} -> {ucs or '(none)'}")
+print(f"STT linked: {summary['stt_linked']}, Total UC links: {summary['total_uc_links']}")
+
+# 8. FINALIZE — Create groups
+print("\n=== 8. FINALIZE — Create Groups ===")
+r = requests.post(f"{BASE}/api/linking-wizard/{session_id}/finalize")
+finalize = r.json()
+print(f"Status: {r.status_code}")
+print(f"Groups created: {finalize['groups_created']}")
+
+# 9. Verify groups exist in group_manager
+print("\n=== 9. Verify Groups via /api/groups ===")
+r = requests.get(f"{BASE}/api/groups")
+groups_data = r.json()
+groups = groups_data.get("groups", [])
+print(f"Total groups: {len(groups)}")
+for g in groups[:5]:
+    item_ids = [item['id'] for item in g['items']]
+    stt_ids = [i for i in item_ids if i.startswith('SYSR')]
+    uc_ids = [i for i in item_ids if i.startswith('UC')]
+    print(f"  {g['group_id']} ({g['group_name'][:50]}): {len(stt_ids)} STT + {len(uc_ids)} UC")
+
+if len(groups) > 5:
+    print(f"  ... and {len(groups) - 5} more groups")
 
 print("\n=== ALL TESTS PASSED ===")

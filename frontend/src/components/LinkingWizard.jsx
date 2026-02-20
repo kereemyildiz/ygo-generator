@@ -1,14 +1,14 @@
 /**
  * LinkingWizard Component
  * Step-by-step wizard for linking STT items to Use Case items.
- * Shows one STT item at a time with suggested UC items for checkbox selection.
+ * Pre-selects existing Excel links, allows user edits, creates groups on finalize.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import {
     Wand2, ChevronRight, ChevronLeft, SkipForward, Check, Loader2,
     FileText, Link2, CheckSquare, Square, AlertCircle, CheckCircle2,
-    XCircle, ArrowRight, BarChart3, Play
+    ArrowRight, Play, FolderPlus, Link
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useToast } from '../context/ToastContext'
@@ -17,21 +17,20 @@ import { Badge } from './ui/Badge'
 import {
     startLinkingWizard, getWizardCurrent, getWizardSuggestions,
     confirmWizardLinks, nextWizardStep, skipWizardStep, prevWizardStep,
-    getWizardSummary
+    getWizardSummary, finalizeWizard
 } from '../lib/api'
 
 
-// ===== Wizard States =====
 const WIZARD_STATE = {
-    IDLE: 'idle',           // Not started, show file selection
-    LOADING: 'loading',     // Starting session
-    ACTIVE: 'active',       // Wizard in progress
-    COMPLETED: 'completed', // All STT items processed
+    IDLE: 'idle',
+    LOADING: 'loading',
+    ACTIVE: 'active',
+    COMPLETED: 'completed',
 }
 
 
 const LinkingWizard = () => {
-    const { uploadedFiles, fetchUploadedFiles } = useApp()
+    const { uploadedFiles, fetchUploadedFiles, fetchGroups, fetchStatistics } = useApp()
     const toast = useToast()
 
     // Wizard state
@@ -48,9 +47,11 @@ const LinkingWizard = () => {
     const [selectedUcIds, setSelectedUcIds] = useState(new Set())
     const [loadingSuggestions, setLoadingSuggestions] = useState(false)
     const [confirming, setConfirming] = useState(false)
+    const [existingLinkInfo, setExistingLinkInfo] = useState({ count: 0, sttCount: 0 })
 
     // Summary data
     const [summary, setSummary] = useState(null)
+    const [finalizing, setFinalizing] = useState(false)
 
     // Fetch files on mount
     useEffect(() => {
@@ -72,9 +73,16 @@ const LinkingWizard = () => {
             setWizardState(WIZARD_STATE.LOADING)
             const result = await startLinkingWizard(sttFile, ucFile)
             setSessionId(result.session_id)
-            toast.success(`Wizard başlatıldı: ${result.total_stt} STT, ${result.total_uc} Senaryo`)
+            setExistingLinkInfo({
+                count: result.existing_links_count || 0,
+                sttCount: result.stt_with_existing_links || 0
+            })
 
-            // Load first STT item
+            const msg = result.existing_links_count > 0
+                ? `Wizard başlatıldı: ${result.total_stt} STT, ${result.total_uc} Senaryo — ${result.existing_links_count} mevcut link bulundu`
+                : `Wizard başlatıldı: ${result.total_stt} STT, ${result.total_uc} Senaryo`
+            toast.success(msg)
+
             await loadCurrentStep(result.session_id)
             setWizardState(WIZARD_STATE.ACTIVE)
         } catch (err) {
@@ -90,20 +98,36 @@ const LinkingWizard = () => {
 
         try {
             setLoadingSuggestions(true)
-            setSelectedUcIds(new Set())
 
             const current = await getWizardCurrent(id)
             setCurrentStt(current)
 
             if (current.completed) {
-                // Load summary
                 const sum = await getWizardSummary(id)
                 setSummary(sum)
                 setWizardState(WIZARD_STATE.COMPLETED)
+                setSelectedUcIds(new Set())
             } else {
                 // Load suggestions
                 const sugg = await getWizardSuggestions(id)
-                setSuggestions(sugg.suggestions || [])
+                const suggList = sugg.suggestions || []
+                setSuggestions(suggList)
+
+                // Pre-select: existing links from Excel + any previously confirmed links
+                const preSelected = new Set()
+                // Add UC IDs that are already linked (from Excel data)
+                for (const s of suggList) {
+                    if (s.already_linked) {
+                        preSelected.add(s.item.id)
+                    }
+                }
+                // Also add any previously confirmed links for this STT (for when going back)
+                if (current.current_uc_ids) {
+                    for (const ucId of current.current_uc_ids) {
+                        preSelected.add(ucId)
+                    }
+                }
+                setSelectedUcIds(preSelected)
             }
         } catch (err) {
             toast.error('Veri yüklenemedi')
@@ -143,13 +167,10 @@ const LinkingWizard = () => {
             const sttId = currentStt.stt_item.id
             const ucIds = Array.from(selectedUcIds)
 
-            if (ucIds.length > 0) {
-                await confirmWizardLinks(sessionId, sttId, ucIds)
-            }
-
+            // Always confirm (even with 0 UCs — means user deliberately deselected)
+            await confirmWizardLinks(sessionId, sttId, ucIds)
             await nextWizardStep(sessionId)
             await loadCurrentStep()
-
         } catch (err) {
             toast.error('Onaylama başarısız')
         } finally {
@@ -183,6 +204,23 @@ const LinkingWizard = () => {
         }
     }
 
+    // ===== Finalize: Create Groups =====
+    const handleFinalize = async () => {
+        try {
+            setFinalizing(true)
+            const result = await finalizeWizard(sessionId)
+            toast.success(`${result.groups_created} grup başarıyla oluşturuldu!`)
+
+            // Refresh groups in the main app
+            await fetchGroups()
+            await fetchStatistics()
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Gruplar oluşturulamadı')
+        } finally {
+            setFinalizing(false)
+        }
+    }
+
     // ===== Reset =====
     const handleReset = () => {
         setWizardState(WIZARD_STATE.IDLE)
@@ -193,6 +231,7 @@ const LinkingWizard = () => {
         setSummary(null)
         setSttFile('')
         setUcFile('')
+        setFinalizing(false)
     }
 
 
@@ -210,13 +249,13 @@ const LinkingWizard = () => {
                         <div>
                             <h2 className="text-xl font-bold">Linkleme Sihirbazı</h2>
                             <p className="text-sm text-muted-foreground">
-                                STT maddelerini Senaryo maddeleri ile adım adım ilişkilendirin
+                                STT maddelerini Senaryo maddeleri ile adım adım ilişkilendirin —
+                                Excel'deki mevcut linkler otomatik olarak seçili gelir
                             </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        {/* STT File Selection */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 <FileText className="h-4 w-4 inline mr-1" />
@@ -234,7 +273,6 @@ const LinkingWizard = () => {
                             </select>
                         </div>
 
-                        {/* UC File Selection */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 <FileText className="h-4 w-4 inline mr-1" />
@@ -274,14 +312,14 @@ const LinkingWizard = () => {
         return (
             <div className="mt-8 flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-                <span className="ml-3 text-lg">Sihirbaz başlatılıyor...</span>
+                <span className="ml-3 text-lg">Sihirbaz başlatılıyor, mevcut linkler taranıyor...</span>
             </div>
         )
     }
 
 
     // ===========================
-    // RENDER: COMPLETED — Summary
+    // RENDER: COMPLETED — Summary + Finalize
     // ===========================
     if (wizardState === WIZARD_STATE.COMPLETED && summary) {
         return (
@@ -295,7 +333,7 @@ const LinkingWizard = () => {
                         <div>
                             <h2 className="text-xl font-bold">Linkleme Tamamlandı!</h2>
                             <p className="text-sm text-muted-foreground">
-                                {summary.stt_linked} STT maddesine toplam {summary.total_uc_links} senaryo maddesi linklendi
+                                {summary.stt_linked} STT maddesine toplam {summary.total_uc_links} senaryo linklendi
                             </p>
                         </div>
                     </div>
@@ -351,7 +389,14 @@ const LinkingWizard = () => {
                                             <td className="px-4 py-2">
                                                 <div className="flex flex-wrap gap-1">
                                                     {detail.linked_ucs.map(uc => (
-                                                        <span key={uc.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
+                                                        <span
+                                                            key={uc.id}
+                                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${uc.is_existing
+                                                                    ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                                                                    : 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
+                                                                }`}
+                                                        >
+                                                            {uc.is_existing && <Link className="h-3 w-3" />}
                                                             {uc.id}
                                                         </span>
                                                     ))}
@@ -364,8 +409,41 @@ const LinkingWizard = () => {
                         </div>
                     </div>
 
+                    {/* Legend */}
+                    <div className="flex items-center gap-4 mb-6 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <Link className="h-3 w-3" /> UC-XXX
+                            </span>
+                            <span>Excel'den mevcut link</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="inline-flex px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
+                                UC-XXX
+                            </span>
+                            <span>Yeni eklenen link</span>
+                        </div>
+                    </div>
+
                     {/* Actions */}
                     <div className="flex gap-3">
+                        <Button
+                            onClick={handleFinalize}
+                            disabled={finalizing}
+                            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            {finalizing ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Gruplar oluşturuluyor...
+                                </>
+                            ) : (
+                                <>
+                                    <FolderPlus className="h-4 w-4" />
+                                    Grupları Oluştur ({summary.total_stt} grup)
+                                </>
+                            )}
+                        </Button>
                         <Button onClick={handleReset} variant="outline" className="gap-2">
                             <Wand2 className="h-4 w-4" />
                             Yeni Linkleme Başlat
@@ -385,6 +463,11 @@ const LinkingWizard = () => {
     const progressPercent = currentStt?.progress_percent || 0
     const currentIdx = (currentStt?.current_index || 0) + 1
     const totalStt = currentStt?.total_stt || 0
+    const existingUcIds = new Set(currentStt?.existing_uc_ids || [])
+
+    // Count how many selected are existing vs new
+    const existingSelectedCount = Array.from(selectedUcIds).filter(id => existingUcIds.has(id)).length
+    const newSelectedCount = selectedUcIds.size - existingSelectedCount
 
     return (
         <div className="mt-8">
@@ -404,10 +487,9 @@ const LinkingWizard = () => {
                             </Badge>
                         </div>
                     </div>
-                    {/* Progress Bar */}
                     <div className="w-full bg-white/20 rounded-full h-2">
                         <div
-                            className="bg-white rounded-full h-2 transition-all duration-500"
+                            className="bg-white rounded-full h-2 transition-all duration-500 ease-out"
                             style={{ width: `${progressPercent}%` }}
                         />
                     </div>
@@ -425,8 +507,7 @@ const LinkingWizard = () => {
 
                         {sttItem ? (
                             <div className="space-y-3">
-                                {/* ID Badge */}
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <Badge variant="default" className="bg-indigo-500 text-white font-mono">
                                         {sttItem.id}
                                     </Badge>
@@ -442,33 +523,36 @@ const LinkingWizard = () => {
                                     {sttData.Category && (
                                         <Badge variant="outline">{sttData.Category}</Badge>
                                     )}
+                                    {existingUcIds.size > 0 && (
+                                        <Badge variant="outline" className="text-blue-500 border-blue-500/30">
+                                            <Link className="h-3 w-3 mr-1" />
+                                            {existingUcIds.size} mevcut link
+                                        </Badge>
+                                    )}
                                 </div>
 
-                                {/* Title */}
                                 <h4 className="text-lg font-bold text-foreground">
                                     {sttData.Requirement_Title || sttItem.id}
                                 </h4>
 
-                                {/* Description */}
                                 {sttData.Description && (
                                     <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground/80 leading-relaxed">
                                         {sttData.Description}
                                     </div>
                                 )}
 
-                                {/* Existing links info */}
                                 {(sttItem.in_links?.length > 0 || sttItem.out_links?.length > 0) && (
                                     <div className="text-xs text-muted-foreground space-y-1">
                                         {sttItem.out_links?.length > 0 && (
                                             <p>
                                                 <Link2 className="h-3 w-3 inline mr-1" />
-                                                Giden bağlantılar: {sttItem.out_links.join(', ')}
+                                                Giden: {sttItem.out_links.join(', ')}
                                             </p>
                                         )}
                                         {sttItem.in_links?.length > 0 && (
                                             <p>
                                                 <Link2 className="h-3 w-3 inline mr-1" />
-                                                Gelen bağlantılar: {sttItem.in_links.join(', ')}
+                                                Gelen: {sttItem.in_links.join(', ')}
                                             </p>
                                         )}
                                     </div>
@@ -503,6 +587,9 @@ const LinkingWizard = () => {
                                         </button>
                                         <Badge variant="outline" className="text-xs">
                                             {selectedUcIds.size} seçili
+                                            {existingSelectedCount > 0 && (
+                                                <span className="text-blue-500 ml-1">({existingSelectedCount} mevcut)</span>
+                                            )}
                                         </Badge>
                                     </>
                                 )}
@@ -521,10 +608,11 @@ const LinkingWizard = () => {
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                                {suggestions.map((sugg, idx) => {
+                                {suggestions.map((sugg) => {
                                     const uc = sugg.item
                                     const ucData = uc.data || {}
                                     const isSelected = selectedUcIds.has(uc.id)
+                                    const isExisting = sugg.already_linked
                                     const score = Math.round(sugg.relevance_score * 100)
 
                                     return (
@@ -534,26 +622,32 @@ const LinkingWizard = () => {
                                             className={`
                         w-full text-left rounded-lg border p-3 transition-all duration-150
                         ${isSelected
-                                                    ? 'border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500/30'
+                                                    ? isExisting
+                                                        ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
+                                                        : 'border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500/30'
                                                     : 'border-border hover:border-indigo-500/40 hover:bg-muted/50'
                                                 }
                       `}
                                         >
                                             <div className="flex items-start gap-3">
-                                                {/* Checkbox */}
                                                 <div className="mt-0.5 flex-shrink-0">
                                                     {isSelected ? (
-                                                        <CheckSquare className="h-5 w-5 text-indigo-500" />
+                                                        <CheckSquare className={`h-5 w-5 ${isExisting ? 'text-blue-500' : 'text-indigo-500'}`} />
                                                     ) : (
                                                         <Square className="h-5 w-5 text-muted-foreground" />
                                                     )}
                                                 </div>
 
-                                                {/* Content */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
+                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                         <span className="font-mono text-xs text-indigo-500">{uc.id}</span>
-                                                        {score > 0 && (
+                                                        {isExisting && (
+                                                            <Badge variant="outline" className="text-xs px-1.5 py-0 text-blue-500 border-blue-500/30">
+                                                                <Link className="h-3 w-3 mr-0.5" />
+                                                                Excel'den mevcut
+                                                            </Badge>
+                                                        )}
+                                                        {score > 0 && !isExisting && (
                                                             <Badge variant="outline" className="text-xs px-1.5 py-0">
                                                                 {score}% eşleşme
                                                             </Badge>

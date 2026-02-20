@@ -32,6 +32,8 @@ class StartWizardResponse(BaseModel):
     uc_filename: str
     total_stt: int
     total_uc: int
+    existing_links_count: int = 0
+    stt_with_existing_links: int = 0
     status: str
 
 
@@ -147,6 +149,18 @@ async def get_summary(session_id: str):
     Get a summary of all links created in this session.
     """
     result = linking_wizard_manager.get_summary(session_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Session bulunamadı")
+    return result
+
+
+@router.post("/{session_id}/finalize")
+async def finalize_session(session_id: str):
+    """
+    Finalize the wizard session and create groups.
+    Each STT item becomes a group containing the STT + linked UC items.
+    """
+    result = linking_wizard_manager.finalize_session(session_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Session bulunamadı")
     return result

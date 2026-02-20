@@ -472,4 +472,14 @@ export const getWizardSummary = async (sessionId) => {
   return response.data
 }
 
+/**
+ * Finalize wizard session and create groups
+ * @param {string} sessionId - Wizard session ID
+ * @returns {Promise} Finalize result with created group count
+ */
+export const finalizeWizard = async (sessionId) => {
+  const response = await api.post(`/linking-wizard/${sessionId}/finalize`)
+  return response.data
+}
+
 export default api
