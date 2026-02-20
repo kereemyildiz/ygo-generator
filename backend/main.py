@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from routes import upload, groups, files, ygo
+from routes import upload, groups, files, ygo, linking_wizard
 from services.group_manager import group_manager
 
 
@@ -36,6 +36,7 @@ app.include_router(files.router)
 app.include_router(upload.router)
 app.include_router(groups.router)
 app.include_router(ygo.router)
+app.include_router(linking_wizard.router)
 
 
 # Root endpoint

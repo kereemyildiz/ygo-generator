@@ -13,6 +13,7 @@ import FileExplorer from './components/FileExplorer'
 import GroupList from './components/GroupList'
 import OrphanedItems from './components/OrphanedItems'
 import YGOJobTracker from './components/YGOJobTracker'
+import LinkingWizard from './components/LinkingWizard'
 
 // Main content component (wrapped by providers)
 const AppContent = () => {
@@ -26,6 +27,9 @@ const AppContent = () => {
 
         {/* File Explorer Section */}
         <FileExplorer />
+
+        {/* Linking Wizard Section */}
+        <LinkingWizard />
 
         {/* Groups List Section */}
         <GroupList />

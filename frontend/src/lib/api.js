@@ -378,4 +378,98 @@ export const checkYGOHealth = async () => {
   return response.data
 }
 
+// ============================================================================
+// Linking Wizard - STT-based linking with mock RAG suggestions
+// ============================================================================
+
+/**
+ * Start a linking wizard session
+ * @param {string} sttFilename - STT Excel filename (already uploaded)
+ * @param {string} ucFilename - Use Case Excel filename (already uploaded)
+ * @returns {Promise} Session info with session_id
+ */
+export const startLinkingWizard = async (sttFilename, ucFilename) => {
+  const response = await api.post('/linking-wizard/start', {
+    stt_filename: sttFilename,
+    uc_filename: ucFilename,
+  })
+  return response.data
+}
+
+/**
+ * Get current STT item and progress
+ * @param {string} sessionId - Wizard session ID
+ * @returns {Promise} Current STT item with progress info
+ */
+export const getWizardCurrent = async (sessionId) => {
+  const response = await api.get(`/linking-wizard/${sessionId}/current`)
+  return response.data
+}
+
+/**
+ * Get mock RAG suggestions for current STT item
+ * @param {string} sessionId - Wizard session ID
+ * @param {number} count - Number of suggestions (default 10)
+ * @returns {Promise} List of suggested UC items
+ */
+export const getWizardSuggestions = async (sessionId, count = 10) => {
+  const response = await api.get(`/linking-wizard/${sessionId}/suggestions?count=${count}`)
+  return response.data
+}
+
+/**
+ * Confirm links between STT and selected UCs
+ * @param {string} sessionId - Wizard session ID
+ * @param {string} sttId - STT item ID
+ * @param {string[]} selectedUcIds - Selected UC IDs
+ * @returns {Promise} Confirmation result
+ */
+export const confirmWizardLinks = async (sessionId, sttId, selectedUcIds) => {
+  const response = await api.post(`/linking-wizard/${sessionId}/confirm`, {
+    stt_id: sttId,
+    selected_uc_ids: selectedUcIds,
+  })
+  return response.data
+}
+
+/**
+ * Move to next STT item
+ * @param {string} sessionId - Wizard session ID
+ * @returns {Promise} Next STT item info
+ */
+export const nextWizardStep = async (sessionId) => {
+  const response = await api.post(`/linking-wizard/${sessionId}/next`)
+  return response.data
+}
+
+/**
+ * Skip current STT item
+ * @param {string} sessionId - Wizard session ID
+ * @returns {Promise} Next STT item info
+ */
+export const skipWizardStep = async (sessionId) => {
+  const response = await api.post(`/linking-wizard/${sessionId}/skip`)
+  return response.data
+}
+
+/**
+ * Go back to previous STT item
+ * @param {string} sessionId - Wizard session ID
+ * @returns {Promise} Previous STT item info
+ */
+export const prevWizardStep = async (sessionId) => {
+  const response = await api.post(`/linking-wizard/${sessionId}/prev`)
+  return response.data
+}
+
+/**
+ * Get wizard session summary
+ * @param {string} sessionId - Wizard session ID
+ * @returns {Promise} Summary of all links
+ */
+export const getWizardSummary = async (sessionId) => {
+  const response = await api.get(`/linking-wizard/${sessionId}/summary`)
+  return response.data
+}
+
 export default api
