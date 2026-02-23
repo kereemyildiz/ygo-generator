@@ -34,7 +34,7 @@ def examine_file(filepath):
     print(f"  Sample IDs: {df[id_col].head(5).tolist()}")
 
 def main():
-    sample_data_dir = Path(__file__).parent / 'sample_data'
+    sample_data_dir = Path(__file__).parent.parent / 'sample_data'
 
     files = sorted(sample_data_dir.glob('*.xlsx'))
 

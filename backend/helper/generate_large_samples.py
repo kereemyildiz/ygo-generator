@@ -8,7 +8,7 @@ from pathlib import Path
 import random
 
 # Output directory
-SAMPLE_DIR = Path(__file__).parent / "sample_data"
+SAMPLE_DIR = Path(__file__).parent.parent / "sample_data"
 
 # Categories and priorities for variety
 CATEGORIES = ['Performance', 'Functional', 'Security', 'Reliability', 'Usability', 'Maintainability']

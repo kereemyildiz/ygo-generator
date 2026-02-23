@@ -71,26 +71,8 @@ class YGOGenerator:
         Returns:
             System prompt string
         """
-        return """Sen bir savunma sanayi yazılım gereksinim uzmanısın. Görevin, verilen maddelerden detaylı ve profesyonel Yazılım Gereksinim Özellikleri (YGÖ) dokümanı oluşturmak.
-
-YGÖ oluştururken şu kurallara uy:
-
-1. **Netlik ve Kesinlik**: Her gereksinim net, anlaşılır ve ölçülebilir olmalı
-2. **İzlenebilirlik**: Maddelerin birbirleriyle olan bağlantılarını göz önünde bulundur
-3. **Tutarlılık**: Tüm gereksinimler birbiriyle tutarlı olmalı
-4. **Doğrulanabilirlik**: Her gereksinim test edilebilir olmalı
-5. **Standartlara Uyum**: Savunma sanayi standartlarına (MIL-STD gibi) uygun format kullan
-
-YGÖ formatı:
-- Gereksinim ID'si (REQ-XXX formatında)
-- Başlık
-- Detaylı açıklama
-- Öncelik seviyesi (Kritik/Yüksek/Orta/Düşük)
-- İlgili bağlantılar ve izlenebilirlik matrisi
-- Doğrulama kriterleri
-- Varsa özel kısıtlamalar veya notlar
-
-Teknik terimleri Türkçe kullan, gerektiğinde İngilizce terim parantez içinde verilebilir."""
+        from services.system_prompt import SYSTEM_PROMPT
+        return SYSTEM_PROMPT
 
     def _build_user_prompt(self, items: List[Dict[str, Any]], group_name: str) -> str:
         """
@@ -103,24 +85,14 @@ Teknik terimleri Türkçe kullan, gerektiğinde İngilizce terim parantez içind
         Returns:
             User prompt string
         """
+        from services.system_prompt import USER_PROMPT_TEMPLATE
         formatted_items = self._format_items_for_prompt(items)
 
-        return f"""Aşağıdaki maddeleri analiz ederek kapsamlı bir Yazılım Gereksinim Özellikleri (YGÖ) dokümanı oluştur.
-
-GRUP ADI: {group_name}
-TOPLAM MADDE SAYISI: {len(items)}
-
-MADDELER:
-{formatted_items}
-
-Lütfen bu maddeleri baz alarak:
-1. Her madde için detaylı YGÖ gereksinimleri oluştur
-2. Maddeler arası ilişkileri ve izlenebilirliği belirt
-3. Her gereksinim için doğrulama kriterleri ekle
-4. Tutarlı ve profesyonel bir format kullan
-5. Gerekirse maddeleri grupla ve kategorize et
-
-YGÖ dokümanını oluştur:"""
+        return USER_PROMPT_TEMPLATE.format(
+            group_name=group_name,
+            item_count=len(items),
+            formatted_items=formatted_items
+        )
 
     async def generate_ygo(
         self,

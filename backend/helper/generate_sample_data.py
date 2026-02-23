@@ -237,7 +237,7 @@ def create_test_scenarios():
 def main():
     """Generate all sample Excel files."""
     # Create sample_data directory if it doesn't exist
-    sample_data_dir = Path(__file__).parent / 'sample_data'
+    sample_data_dir = Path(__file__).parent.parent / 'sample_data'
     sample_data_dir.mkdir(exist_ok=True)
 
     # Generate and save System Requirements
